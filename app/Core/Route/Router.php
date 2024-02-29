@@ -5,8 +5,7 @@ namespace App\Core\Route;
 use App\Core\Contracts\RouterInterface;
 
 class Router implements RouterInterface {
-
-    protected static $routes = [
+    protected array $routes = [
         'GET' => [],
         'POST' => [],
         'DELETE' => [],
@@ -15,84 +14,139 @@ class Router implements RouterInterface {
         'OPTIONS' => [],
     ];
 
-    protected static $prefix = '';
+    protected static ?Router $instance = null;
+    protected string $prefix = '';
+    protected array $middlewareStack = [];
+    protected array $prefixStack = [];
+    protected array $currentGroupMiddleware = [];
 
-    // Добавляем стек для хранения префиксов
-    protected static $prefixStack = [];
+    /**
+     * Синглтон паттерн: метод для получения экземпляра
+     *
+     * @return Router|null
+     */
+    public static function getInstance(): ?Router {
+        if (static::$instance === null) {
+            static::$instance = new static();
+        }
 
-    public static function get($uri, $controller) {
-        static::addRoute('GET', $uri, $controller);
-    }
-
-    public static function post($uri, $controller) {
-        static::addRoute('POST', $uri, $controller);
+        return static::$instance;
     }
 
     /**
+     * Регистрируем маршрут
+     *
+     * @param string $method
+     * @param string $uri
+     * @param $controller
+     * @return void
+     */
+    public function addRoute(string $method, string $uri, $controller): void {
+        $uri = $this->prefix . '/' . trim($uri, '/');
+        $uri = $uri !== '/' ? trim($uri, '/') : $uri;
+
+        $this->routes[strtoupper($method)][$uri] = [
+            'controller' => $controller,
+            'middleware' => array_merge($this->currentGroupMiddleware, $this->middlewareStack),
+        ];
+
+        $this->middlewareStack = [];
+    }
+
+    /**
+     * Обрабатываем запрос
+     *
+     * @return void
      * @throws \Exception
      */
     public function dispatch() {
         $uri = $this->getUri();
         $method = $this->getMethod();
 
-        if (isset(static::$routes[$method][$uri])) {
-            // Получаем маршрут
-            $route = static::$routes[$method][$uri];
+        foreach (static::getInstance()->routes[$method] as $routeUri => $routeInfo) {
+            if (preg_match('#^' . $routeUri . '$#', $uri, $matches)) {
+                // Middleware
+                foreach ($routeInfo['middleware'] as $middleware) {
+                    $middlewareInstance = new $middleware();
+                    $middlewareInstance->handle();
+                }
 
-            // Если маршрут строка, разделяем контроллер и метод
-            if (is_string($route)) {
-                return $this->callAction(...explode('@', $route));
-            }
-
-            // Если маршрут массив, передаём его напрямую в callAction (контроллер и метод)
-            if (is_array($route)) {
-                return $this->callAction($route[0], $route[1]);
+                // Controller
+                return $this->callAction(
+                    ...explode('@', $routeInfo['controller'])
+                );
             }
         }
 
-        header("HTTP/2 404 Not Found");
-
-        exit;
+        // Если маршрут не найден
+        $this->sendNotFound();
     }
 
-    public static function prefix($prefix) {
-        self::$prefixStack[] = self::$prefix; // Сохраняем текущий префикс в стек
-
-        self::$prefix .= '/' . trim($prefix, '/');
-
-        return new static; // Возвращаем экземпляр для цепочного вызова
+    /**
+     * Получаем URI
+     *
+     * @return string
+     */
+    public function getUri(): string
+    {
+        $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+        return $uri === '' ? '/' : $uri;
     }
 
-    public static function group(callable $callback) {
+    /**
+     * Универсальный вызов для регистрации маршрутов
+     *
+     * @param $method
+     * @param $args
+     * @return Router
+     */
+    public static function __callStatic($method, $args) {
+        call_user_func_array([static::getInstance(), 'addRoute'], [$method, ...$args]);
+
+        return static::getInstance();
+    }
+
+    /**
+     * Устанавливаем префикс для группы маршрутов
+     * @param $prefix
+     * @return void
+     */
+    public static function prefix($prefix): Router {
+        $instance = static::getInstance();
+        $instance->prefixStack[] = [$instance->prefix, $instance->currentGroupMiddleware];
+        $instance->prefix .= '/' . trim($prefix, '/');
+        return $instance;
+    }
+
+    /**
+     * @param callable $callback
+     * @return Router
+     */
+    public static function group(callable $callback): Router {
+        $instance = static::getInstance();
         call_user_func($callback);
 
-        // Восстанавливаем предыдущий префикс из стека
-        self::$prefix = array_pop(self::$prefixStack);
+        [$instance->prefix, $instance->currentGroupMiddleware] = array_pop($instance->prefixStack) ?: ['', []];
+        return $instance;
     }
 
-    protected static function addRoute($method, $uri, $controller) {
-        $uri = static::$prefix . '/' . trim($uri, '/');
-        $uri = $uri !== '/' ? trim($uri, '/') : $uri; // Удаляем начальный слеш, если нет префикса
-
-        if (is_string($controller) && strpos($controller, '@') !== false) {
-            static::$routes[$method][$uri] = $controller;
+    /**
+     * @param $middleware
+     * @return $this
+     */
+    public function middleware($middleware): Router {
+        if (empty($this->prefixStack)) {
+            $this->middlewareStack[] = $middleware;
         } else {
-            static::$routes[$method][$uri] = [$controller, null];
+            $this->currentGroupMiddleware[] = $middleware;
         }
-    }
-
-    public function getUri() {
-        // Получаем URI и удаляем пробельные символы с обоих концов строки
-        $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-
-        // Если URI пуст, возвращаем '/'
-        return $uri === '' ? '/' : $uri;
+        return $this;
     }
 
     /**
      * @throws \Exception
      */
-    protected function callAction($controller, $action) {
+    protected function callAction($controller, $action = null) {
         if (!class_exists($controller)) {
             throw new \Exception("Controller {$controller} not found.");
         }
@@ -117,6 +171,14 @@ class Router implements RouterInterface {
     }
 
     protected function getMethod() {
-        return $_SERVER['REQUEST_METHOD']; // Получаем HTTP-метод
+        return $_SERVER['REQUEST_METHOD'];
+    }
+
+    /**
+     * @return void
+     */
+    protected function sendNotFound() {
+        header("HTTP/1.0 404 Not Found");
+        exit('404 Not Found');
     }
 }
