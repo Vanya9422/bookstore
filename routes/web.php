@@ -8,4 +8,3 @@ Router::get('/', \App\Controllers\HomeController::class)->middleware(\App\Middle
 //    Router::get('/', \App\Controllers\HomeController::class);
 //    // Добавьте столько маршрутов, сколько нужно
 //})->middleware(\App\Middleware\AuthMiddleware::class);
-

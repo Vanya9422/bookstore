@@ -9,7 +9,9 @@ class AuthMiddleware implements MiddlewareInterface {
         if (!$this->isAuthenticated()) {
 //            header('Location: /login');
 
+            $dbHost = env('DB_DATABASE');
 
+            print_r($dbHost);
 
             exit('Ashxatav Brats');
         }
