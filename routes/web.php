@@ -2,7 +2,7 @@
 
 use App\Core\Route\Router;
 
-Router::get('/', \App\Controllers\HomeController::class)->middleware(\App\Middleware\AuthMiddleware::class);
+Router::get('/', \App\Controllers\HomeController::class);
 
 //Router::prefix('tasks')->group(function () {
 //    Router::get('/', \App\Controllers\HomeController::class);

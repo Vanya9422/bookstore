@@ -1,20 +1,16 @@
 <?php
 
-namespace App\Core\Bootstrappers;
+namespace App\Core;
 
-use App\Core\Contracts\BootstrapperInterface;
-use DI\Container;
-use DI\DependencyException;
-use DI\NotFoundException;
+use Phinx\Migration\AbstractMigration;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
-class DatabaseBootstrapper implements BootstrapperInterface {
-
+abstract class BaseMigration extends AbstractMigration
+{
     /**
-     * @throws DependencyException
-     * @throws NotFoundException|\Exception
+     * @throws \Exception
      */
-    public function boot(Container $container): void
+    public function init(): void
     {
         $connection = config('database.default');
 
@@ -32,8 +28,7 @@ class DatabaseBootstrapper implements BootstrapperInterface {
             'prefix' => $connectionConfigs['prefix'],
         ]);
 
-        $capsule->bootEloquent();
-
         $capsule->setAsGlobal();
+        $capsule->bootEloquent();
     }
 }

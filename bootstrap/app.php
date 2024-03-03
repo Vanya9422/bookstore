@@ -14,8 +14,7 @@ $app = new Application();
 $app->addBootstrapper(new ServicesBootstrapper()); // Добавление загрузчика сервисов
 
 // Добавление загрузчиков
-$app->addBootstrapper(new RouteBootstrapper());
 $app->addBootstrapper(new DatabaseBootstrapper());
+$app->addBootstrapper(new RouteBootstrapper());
 
-// Запуск приложения
-$app->run();
+$app->run(); // Запуск приложения
