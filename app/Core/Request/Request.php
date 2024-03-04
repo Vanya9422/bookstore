@@ -4,7 +4,7 @@ namespace App\Core\Request;
 
 use App\Core\Contracts\RequestInterface;
 
-final class Request implements RequestInterface
+class Request implements RequestInterface
 {
     private array $query;
     private array $request;
@@ -15,11 +15,14 @@ final class Request implements RequestInterface
     }
 
     public function get($key, $default = null) {
-        return $this->query[$key] ?? $default;
+        return $this->query[$key] ?? $this->request[$key] ?? $default;
     }
 
-    public function request($key, $default = null)
-    {
-        return $this->request[$key] ?? $default;
+    public function has($key): bool {
+        return isset($this->query[$key]) || isset($this->request[$key]);
+    }
+
+    public function all(): array {
+        return array_merge($this->request, $this->query);
     }
 }

@@ -12,7 +12,7 @@ class HomeController {
         private RequestInterface $request
     ) {}
 
-    public function __invoke() {
+    public function __invoke(): void {
         $currentPage = $this->request->get('page', 1);
 
         // Количество записей на странице
