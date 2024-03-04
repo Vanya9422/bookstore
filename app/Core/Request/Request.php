@@ -15,7 +15,7 @@ class Request implements RequestInterface
     }
 
     public function get($key, $default = null) {
-        return $this->query[$key] ?? $this->request[$key] ?? $default;
+        return $this->all()[$key] ?? $default;
     }
 
     public function has($key): bool {

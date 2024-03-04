@@ -2,12 +2,15 @@
 
 namespace App\Core\Route;
 
-use DI\Container;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use App\Core\Contracts\RouterInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
+/**
+ * @method static post(string $string, string|array $array)
+ * @method static get(string $string, string|array $string1)
+ */
 class Router implements RouterInterface {
     protected array $routes = [
         'GET' => [],
@@ -65,7 +68,7 @@ class Router implements RouterInterface {
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function dispatch(ContainerInterface $container) {
+    public function dispatch(ContainerInterface $container): void {
         $uri = $this->getUri();
         $method = $this->getMethod();
 
@@ -78,7 +81,7 @@ class Router implements RouterInterface {
                 }
 
                 // Controller
-                return $this->callAction(
+                $this->callAction(
                     $container, ...explode('@', $routeInfo['controller'])
                 );
             }
@@ -150,32 +153,52 @@ class Router implements RouterInterface {
     }
 
     /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
+     * Вызывает указанный метод контроллера, автоматически внедряя зависимости.
+     *
+     * @param ContainerInterface $container Контейнер зависимостей для автоматического внедрения.
+     * @param string $controller Имя класса контроллера.
+     * @param string|null $action Имя метода в контроллере для вызова.
+     * @return mixed Результат выполнения метода контроллера.
+     * @throws ContainerExceptionInterface Если контейнер не может вернуть элемент.
+     * @throws NotFoundExceptionInterface Если элемент не найден в контейнере.
+     * @throws \Exception Если контроллер или метод не найдены, или параметры метода не могут быть разрешены.
      */
-    protected function callAction(ContainerInterface $container, $controller, $action = null) {
+    protected function callAction(ContainerInterface $container, string $controller, string $action = null): mixed {
+        // Проверяем существование класса контроллера
         if (!class_exists($controller)) {
             throw new \Exception("Controller {$controller} not found.");
         }
 
-        // Изменение: Создаем экземпляр контроллера через контейнер
+        // Получаем экземпляр контроллера из контейнера
         $controllerInstance = $container->get($controller);
 
-        // Если $action не указан, пытаемся вызвать __invoke
-        if ($action === null) {
-            if (!method_exists($controllerInstance, '__invoke')) {
-                throw new \Exception("Controller {$controller} is not invokable.");
+        // Определяем метод для вызова
+        $methodName = $action ?? '__invoke';
+        if (!method_exists($controllerInstance, $methodName)) {
+            throw new \Exception("{$controller} does not respond to the {$methodName} action.");
+        }
+
+        // Анализируем параметры метода с использованием рефлексии
+        $method = new \ReflectionMethod($controllerInstance, $methodName);
+        $parameters = $method->getParameters();
+
+        // Подготавливаем аргументы для вызова метода
+        $args = [];
+        foreach ($parameters as $parameter) {
+            $parameterType = $parameter->getType();
+            if (!$parameterType) {
+                throw new \Exception("Cannot resolve the parameter `{$parameter->getName()}` in method `{$methodName}` of controller `{$controller}`. Type hint is missing.");
             }
-
-            return $controllerInstance();
+            $parameterTypeName = $parameterType->getName();
+            if ($container->has($parameterTypeName)) {
+                $args[] = $container->get($parameterTypeName);
+            } else {
+                throw new \Exception("The required service `{$parameterTypeName}` is not configured in the container.");
+            }
         }
 
-        // Если $action указан, проверяем наличие метода и вызываем его
-        if (!method_exists($controllerInstance, $action)) {
-            throw new \Exception("{$controller} does not respond to the {$action} action.");
-        }
-
-        return $controllerInstance->$action();
+        // Вызываем метод контроллера с подготовленными аргументами
+        return $method->invokeArgs($controllerInstance, $args);
     }
 
     protected function getMethod() {
@@ -185,7 +208,8 @@ class Router implements RouterInterface {
     /**
      * @return void
      */
-    protected function sendNotFound() {
+    protected function sendNotFound(): void
+    {
         header("HTTP/1.0 404 Not Found");
         exit('404 Not Found');
     }

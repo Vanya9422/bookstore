@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Http\Controllers;
 
 class BaseController
 {
-
+    /**
+     * @throws \Exception
+     */
     protected function view(string $viewPath, array $data = []): void
     {
         // Путь к файлам представлений может быть задан глобально или передан напрямую
-        $viewFilePath = __DIR__ . '/../../views/' . $viewPath . '.php';
+        $viewFilePath = __DIR__ . '/../../../views/' . $viewPath . '.php';
 
         if (!file_exists($viewFilePath)) {
             throw new \Exception("View file does not exist: {$viewPath}");

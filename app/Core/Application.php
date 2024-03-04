@@ -30,7 +30,6 @@ class Application implements ApplicationInterface {
         // Конфигурируем контейнер
         $containerBuilder->addDefinitions([
             AuthorRepositoryInterface::class => \DI\autowire(AuthorRepository::class),
-            RequestInterface::class => \DI\autowire(Request::class),
         ]);
 
         $this->container = $containerBuilder->build();

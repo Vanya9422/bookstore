@@ -1,4 +1,4 @@
-<?php include 'layouts/header.php'; ?>
+<?php include __DIR__ . '/../layouts/header.php'; ?>
 
 <main class="container mx-auto px-4 sm:px-8 max-w-3xl pt-16 mb-10">
     <div class="py-8">
@@ -48,4 +48,4 @@
     </div>
 </main>
 
-<?php include 'layouts/footer.php'; ?>
+<?php include __DIR__ . '/../layouts/footer.php'; ?>
