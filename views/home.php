@@ -1,32 +1,34 @@
+<!-- home.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Список авторов и книг</title>
+    <title>Home Page</title>
 </head>
 <body>
-<h1>Список авторов и их книг</h1>
+<h1>Авторы и их книги</h1>
 <ul>
-    <?php foreach ($authors as $author): ?>
+    <?php foreach ($authors['data'] as $author): ?>
         <li>
-            <h2><?= $author->name ?></h2>
+            <strong><?= htmlspecialchars($author['name']) ?></strong>
             <ul>
-                <?php foreach ($author->books as $book): ?>
-                    <li>
-                        <strong><?= $book->title ?></strong> - <?= $book->description ?> (<?= $book->published_year ?>)
-                    </li>
+                <?php foreach ($author['books'] as $book): ?>
+                    <li><?= htmlspecialchars($book['title']) ?> (<?= $book['published_year'] ?>)</li>
                 <?php endforeach; ?>
             </ul>
         </li>
     <?php endforeach; ?>
 </ul>
 
-<!-- Добавление ссылок для пагинации -->
 <div>
-    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+    Страница <?= $authors['current_page'] ?> из <?= $authors['total_pages'] ?>
+</div>
+
+<!-- Пагинация -->
+<nav>
+    <?php for ($i = 1; $i <= $authors['total_pages']; $i++): ?>
         <a href="?page=<?= $i ?>"><?= $i ?></a>
     <?php endfor; ?>
-</div>
+</nav>
 </body>
 </html>

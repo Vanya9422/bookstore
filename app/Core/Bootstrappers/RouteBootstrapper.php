@@ -32,7 +32,7 @@ class RouteBootstrapper implements BootstrapperInterface {
      */
     private function dispatchRoutes(Container $container): void {
         $router = $container->get(RouterInterface::class);
-        $router->dispatch();
+        $router->dispatch($container);
     }
 
     private function setupRoutes(): void {

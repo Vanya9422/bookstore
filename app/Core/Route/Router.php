@@ -2,7 +2,11 @@
 
 namespace App\Core\Route;
 
+use DI\Container;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use App\Core\Contracts\RouterInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class Router implements RouterInterface {
     protected array $routes = [
@@ -56,10 +60,12 @@ class Router implements RouterInterface {
     /**
      * Обрабатываем запрос
      *
+     * @param ContainerInterface $container
      * @return void
-     * @throws \Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function dispatch() {
+    public function dispatch(ContainerInterface $container) {
         $uri = $this->getUri();
         $method = $this->getMethod();
 
@@ -73,7 +79,7 @@ class Router implements RouterInterface {
 
                 // Controller
                 return $this->callAction(
-                    ...explode('@', $routeInfo['controller'])
+                    $container, ...explode('@', $routeInfo['controller'])
                 );
             }
         }
@@ -144,14 +150,16 @@ class Router implements RouterInterface {
     }
 
     /**
-     * @throws \Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    protected function callAction($controller, $action = null) {
+    protected function callAction(ContainerInterface $container, $controller, $action = null) {
         if (!class_exists($controller)) {
             throw new \Exception("Controller {$controller} not found.");
         }
 
-        $controllerInstance = new $controller();
+        // Изменение: Создаем экземпляр контроллера через контейнер
+        $controllerInstance = $container->get($controller);
 
         // Если $action не указан, пытаемся вызвать __invoke
         if ($action === null) {
@@ -162,7 +170,7 @@ class Router implements RouterInterface {
             return $controllerInstance();
         }
 
-        // Если $action указан, вызываем указанный метод
+        // Если $action указан, проверяем наличие метода и вызываем его
         if (!method_exists($controllerInstance, $action)) {
             throw new \Exception("{$controller} does not respond to the {$action} action.");
         }

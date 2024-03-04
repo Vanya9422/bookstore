@@ -2,6 +2,8 @@
 
 namespace App\Core\Contracts;
 
+use Psr\Container\ContainerInterface;
+
 interface RouterInterface {
-    public function dispatch();
+    public function dispatch(ContainerInterface $container);
 }
