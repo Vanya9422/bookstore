@@ -5,13 +5,16 @@ namespace App\Controllers;
 use App\Core\Contracts\RequestInterface;
 use App\Repository\Tasks\AuthorRepositoryInterface;
 
-class HomeController {
+class HomeController extends BaseController {
 
     public function __construct(
         private AuthorRepositoryInterface$authorRepository,
         private RequestInterface $request
     ) {}
 
+    /**
+     * @throws \Exception
+     */
     public function __invoke(): void {
         $currentPage = $this->request->get('page', 1);
 
@@ -21,7 +24,6 @@ class HomeController {
         // Получение авторов с их книгами с пагинацией
         $authors = $this->authorRepository->paginate($perPage, $currentPage, ['books']);
 
-        // Подключение представления и передача данных
-        require __DIR__ . '/../../views/home.php';
+        $this->view('home', ['authors' => $authors, 'activePage' => 'home']);
     }
 }

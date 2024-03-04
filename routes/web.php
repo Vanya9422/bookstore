@@ -4,7 +4,4 @@ use App\Core\Route\Router;
 
 Router::get('/', \App\Controllers\HomeController::class);
 
-//Router::prefix('tasks')->group(function () {
-//    Router::get('/', \App\Controllers\HomeController::class);
-//    // Добавьте столько маршрутов, сколько нужно
-//})->middleware(\App\Middleware\AuthMiddleware::class);
+findFiles(__DIR__ . '/../routes/group');

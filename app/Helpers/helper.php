@@ -79,4 +79,28 @@ if (!function_exists('config')) {
             return $value;
         }
     }
+
+    if (!function_exists('findFiles')) {
+        /**
+         * @param string $folder
+         * @return void
+         */
+        function findFiles(string $folder): void
+        {
+            $files = scandir($folder);
+
+            foreach ($files as $file) {
+                // Игнорируем текущую и родительскую директории
+                if ($file != '.' && $file != '..') {
+                    $path = $folder . '/' . $file;
+                    if (is_file($path)) {
+                        include_once $path;
+                    } elseif (is_dir($path)) {
+                        // Если это директория, вызываем функцию рекурсивно
+                        findFiles($path);
+                    }
+                }
+            }
+        }
+    }
 }
