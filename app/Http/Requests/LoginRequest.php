@@ -14,8 +14,8 @@ class LoginRequest extends FormRequest {
      */
     public function rules(): array {
         return [
-            'email' => v::notEmpty()->email()->setName('Почта пользователя'),
-            'password' => v::notEmpty()->length(6)->setName('Пароль'),
+            'email' => v::notEmpty()->email(),
+            'password' => v::notEmpty()->length(6),
         ];
     }
 }
