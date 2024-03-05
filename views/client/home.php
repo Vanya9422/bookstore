@@ -20,20 +20,25 @@
             </nav>
         </div>
 
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <ul class="divide-y divide-gray-200">
-                <?php foreach ($authors['data'] as $author): ?>
-                    <li class="p-4 hover:bg-gray-50 cursor-pointer">
-                        <strong class="text-lg text-indigo-600"><?= htmlspecialchars($author['name']) ?></strong>
-                        <ul class="mt-2 space-y-1 text-gray-500">
-                            <?php foreach ($author['books'] as $book): ?>
-                                <li class="text-sm"><?= htmlspecialchars($book['title']) ?> (<?= $book['published_year'] ?>)</li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
+        <!-- Проверка на пустой список авторов -->
+        <?php if (empty($authors['data'])): ?>
+            <p class="text-gray-700 text-center">Авторы не найдены.</p>
+        <?php else: ?>
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <ul class="divide-y divide-gray-200">
+                    <?php foreach ($authors['data'] as $author): ?>
+                        <li class="p-4 hover:bg-gray-50 cursor-pointer">
+                            <strong class="text-lg text-indigo-600"><?= htmlspecialchars($author['name']) ?></strong>
+                            <ul class="mt-2 space-y-1 text-gray-500">
+                                <?php foreach ($author['books'] as $book): ?> <!-- Обратите внимание на индексацию по ID автора -->
+                                    <li class="text-sm"><?= htmlspecialchars($book['title']) ?> (<?= $book['published_year'] ?>)</li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
         <div class="mt-6">
             <!-- Пагинация -->
@@ -48,4 +53,4 @@
     </div>
 </main>
 
-<?php include __DIR__ . '/../layouts/footer.php'; ?>
+<?php include __DIR__ . '/../layouts/footer.php';  ?>

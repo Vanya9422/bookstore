@@ -33,7 +33,7 @@ abstract class FormRequest extends Request implements RequestInterface, FormRequ
 
         if ($this->fails()) {
             // Если есть ошибки, бросаем исключение с ними
-            throw new ValidationException("Validation errors", $this->errors);
+            throw new ValidationException($this->errors, "Validation errors");
         }
 
         return true;

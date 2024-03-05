@@ -2,7 +2,6 @@
 
 use App\Core\Application;
 use App\Core\Bootstrappers\{
-    DatabaseBootstrapper,
     RouteBootstrapper,
     ServicesBootstrapper
 };
@@ -14,7 +13,6 @@ $app = new Application();
 $app->addBootstrapper(new ServicesBootstrapper()); // Добавление загрузчика сервисов
 
 // Добавление загрузчиков
-$app->addBootstrapper(new DatabaseBootstrapper());
 $app->addBootstrapper(new RouteBootstrapper());
 
 $app->run(); // Запуск приложения

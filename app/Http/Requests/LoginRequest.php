@@ -7,12 +7,6 @@ use Respect\Validation\Validator as v;
 
 class LoginRequest extends FormRequest {
 
-    public function __construct() {
-        parent::__construct();
-
-//        $this->validate();
-    }
-
     /**
      * Определяет правила валидации для запроса логина.
      *

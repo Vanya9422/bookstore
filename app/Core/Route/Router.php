@@ -68,7 +68,7 @@ class Router implements RouterInterface {
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function dispatch(ContainerInterface $container): void {
+    public function dispatch(ContainerInterface $container) {
         $uri = $this->getUri();
         $method = $this->getMethod();
 
@@ -81,9 +81,7 @@ class Router implements RouterInterface {
                 }
 
                 // Controller
-                $this->callAction(
-                    $container, ...explode('@', $routeInfo['controller'])
-                );
+                return $this->callAction($container, ...explode('@', $routeInfo['controller']));
             }
         }
 
@@ -163,7 +161,7 @@ class Router implements RouterInterface {
      * @throws NotFoundExceptionInterface Если элемент не найден в контейнере.
      * @throws \Exception Если контроллер или метод не найдены, или параметры метода не могут быть разрешены.
      */
-    protected function callAction(ContainerInterface $container, string $controller, string $action = null): mixed {
+    protected function callAction(ContainerInterface $container, string $controller, string $action = null) {
         // Проверяем существование класса контроллера
         if (!class_exists($controller)) {
             throw new \Exception("Controller {$controller} not found.");
@@ -210,7 +208,8 @@ class Router implements RouterInterface {
      */
     protected function sendNotFound(): void
     {
-        header("HTTP/1.0 404 Not Found");
+        header("HTTP/2 404 Not Found");
+
         exit('404 Not Found');
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Core;
 
 use App\Core\Contracts\ApplicationInterface;
-use App\Core\Contracts\RequestInterface;
-use App\Core\Request\Request;
+use App\Core\Contracts\DatabaseInterface;
+use App\Core\Database\Database;
 use App\Repository\Tasks\AuthorRepository;
 use App\Repository\Tasks\AuthorRepositoryInterface;
 use DI\Container;
@@ -16,7 +16,7 @@ class Application implements ApplicationInterface {
     /**
      * @var Container
      */
-    private Container $container;
+    private static Container $container;
 
     private array $bootstrappers = [];
 
@@ -30,9 +30,14 @@ class Application implements ApplicationInterface {
         // Конфигурируем контейнер
         $containerBuilder->addDefinitions([
             AuthorRepositoryInterface::class => \DI\autowire(AuthorRepository::class),
+            DatabaseInterface::class => function () {
+                $connection = config('database.default');
+                $connectionConfigs = config("database.connections.$connection");
+                return new Database($connectionConfigs);
+            },
         ]);
 
-        $this->container = $containerBuilder->build();
+        static::$container = $containerBuilder->build();
     }
 
     public function addBootstrapper(BootstrapperInterface $bootstrapper): void {
@@ -41,7 +46,19 @@ class Application implements ApplicationInterface {
 
     public function run(): void {
         foreach ($this->bootstrappers as $bootstrapper) {
-            $bootstrapper->boot($this->container);
+            $bootstrapper->boot(static::$container);
         }
+    }
+
+    public static function isContainerInitialized(): bool {
+        return isset(self::$container);
+    }
+
+    public static function getContainer(): ?Container {
+        if (self::isContainerInitialized()) {
+            return self::$container;
+        }
+
+        return null;
     }
 }

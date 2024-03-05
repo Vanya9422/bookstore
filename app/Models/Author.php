@@ -2,17 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+
+
+use App\Core\Database\Model;
 
 class Author extends Model {
-    protected $fillable = ['name'];
 
-    /**
-     * @return HasMany
-     */
-    public function books(): HasMany
-    {
-        return $this->hasMany(Book::class);
+    public static string $table = 'authors';
+
+    public function books($ids): array {
+        return $this->hasMany(Book::class, 'author_id', $ids);
     }
 }

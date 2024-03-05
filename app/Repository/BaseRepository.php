@@ -2,11 +2,9 @@
 
 namespace App\Repository;
 
+use App\Core\Database\Model;
 use App\Exceptions\Repository\RepositoryException;
 use App\Repository\Contracts\RepositoryInterface;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 
 /**
  * Базовый класс репозитория, который определяет основные операции,
@@ -30,16 +28,6 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function getModel(): Model {
         return $this->model;
-    }
-
-    /**
-     * Начинает новый запрос к базе данных, возвращая построитель запросов для модели.
-     *
-     * @return Builder
-     */
-    protected function startQuery(): Builder
-    {
-        return $this->getModel()->newQuery();
     }
 
     /**
@@ -80,79 +68,14 @@ abstract class BaseRepository implements RepositoryInterface
     }
 
     /**
-     * Создает новый результат в базе данных.
+     * Получение списка авторов с пагинацией.
      *
-     * @param array $attributes Атрибуты для создания результата.
-     */
-    public function create(array $attributes): Model {
-        return $this->startQuery()->create($attributes);
-    }
-
-    /**
-     * Обновляет сущность в репозитории по её идентификатору.
-     *
-     * @param int|string $id Идентификатор сущности.
-     * @param array $attributes Атрибуты для обновления.
-     * @return Model
-     * @throws RepositoryException
-     */
-    public function update(int|string $id, array $attributes): Model {
-        $model = $this->find($id);
-        if ($model) {
-            $model->fill($attributes);
-            $model->save();
-            return $model;
-        }
-
-        throw new RepositoryException("Модель не найдена.");
-    }
-
-    /**
-     * Находит сущность по идентификатору.
-     *
-     * @param int|string $id Идентификатор сущности.
-     * @return Model|null
-     */
-    public function find(int|string $id): ?Model {
-        return $this->startQuery()->find($id);
-    }
-
-    /**
-     * Пагинация результатов запроса.
-     *
-     * @param int $perPage Количество результатов на страницу.
-     * @param ?int $currentPage Номер текущей страницы, по умолчанию 1.
-     * @param array $relations Массив связей, которые нужно подгрузить с результатами.
-     *
-     * @return array
+     * @param int $perPage Количество записей на страницу.
+     * @param ?int $currentPage Текущая страница.
+     * @param array $relations
+     * @return array Результаты пагинации.
      */
     public function paginate(int $perPage, ?int $currentPage = 1, array $relations = []): array {
-        $query = $this->startQuery();
-
-        if (!empty($relations)) {
-            $query = $query->with($relations);
-        }
-
-        // Вычисляем общее количество записей в базе данных для данного запроса,
-        // чтобы можно было определить общее количество страниц.
-        $totalResults = $query->count();
-
-        // Вычисляем смещение на основе номера текущей страницы и количества результатов на страницу.
-        $offset = ($currentPage - 1) * $perPage;
-
-        // Получаем подмножество результатов с учетом смещения и лимита.
-        // Это обеспечивает пагинацию данных.
-        $results = $query->skip($offset)->take($perPage)->get();
-
-        // Определяем общее количество страниц пагинации.
-        $totalPages = ceil($totalResults / $perPage);
-
-        return [
-            'data' => $results, // Массив с данными текущей страницы
-            'total' => $totalResults, // Общее количество доступных результатов
-            'per_page' => $perPage, // Количество результатов на страницу
-            'current_page' => $currentPage, // Номер текущей страницы
-            'total_pages' => $totalPages // Общее количество страниц
-        ];
+        return $this->getModel()->with($relations)->paginate($perPage, $currentPage);
     }
 }

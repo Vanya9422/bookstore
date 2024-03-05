@@ -3,8 +3,8 @@
 <div class="flex items-center justify-center h-screen">
     <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/auth/login" method="POST">
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Имя пользователя</label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" name="email" type="text" placeholder="Имя пользователя">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Почта</label>
+            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" name="email" type="email" placeholder="Почта" value="">
         </div>
         <div class="mb-6">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Пароль</label>

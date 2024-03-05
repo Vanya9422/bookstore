@@ -21,4 +21,15 @@ class BaseController
 
         require $viewFilePath;
     }
+
+    /**
+     * @param string $route
+     * @return void
+     */
+    protected function redirect(string $route): void
+    {
+        header("Location: $route");
+
+        exit;
+    }
 }

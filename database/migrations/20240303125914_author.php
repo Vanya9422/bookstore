@@ -2,32 +2,42 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Capsule\Manager as Capsule;
-
-final class Author extends \App\Core\BaseMigration
+final class Author extends \Phinx\Migration\AbstractMigration
 {
+    use \App\Traits\ConnectionAble;
+
     /**
-     * Change Method.
-     *
-     * Write your reversible migrations using this method.
-     *
-     * More information on writing migrations is available here:
-     * https://book.cakephp.org/phinx/0/en/migrations.html#the-change-method
-     *
-     * Remember to call "create()" or "update()" and NOT "save()" when working
-     * with the Table class.
+     * @throws Exception
      */
     public function up(): void
     {
-        Capsule::schema()->create('authors', function ($table) {
-            $table->id();
-            $table->string('name');
-            $table->timestamps();
-        });
+        // Получаем объект соединения с базой данных
+        $db = $this->getDatabaseConnection();
+
+        // Выполняем SQL-запрос для создания таблицы `authors`
+        $sql = "CREATE TABLE authors (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )";
+
+        // Используем объект соединения для выполнения запроса
+        $db->query($sql);
     }
 
+    /**
+     * @throws Exception
+     */
     public function down(): void
     {
-        $this->table('authors')->drop()->save();
+        // Получаем объект соединения с базой данных
+        $db = $this->getDatabaseConnection();
+
+        // Выполняем SQL-запрос для удаления таблицы `authors`
+        $sql = "DROP TABLE IF EXISTS authors";
+
+        // Используем объект соединения для выполнения запроса
+        $db->query($sql);
     }
 }

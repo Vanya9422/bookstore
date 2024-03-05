@@ -1,29 +1,19 @@
 <?php
 
-use Illuminate\Database\Capsule\Manager as Capsule;
 use Phinx\Seed\AbstractSeed;
 
-class AuthorsAndBooksSeeder extends AbstractSeed {
+class AuthorsAndBooksSeeder extends AbstractSeed
+{
+
+    use \App\Traits\ConnectionAble;
+
+    /**
+     * @throws Exception
+     */
     public function run(): void
     {
-        $connection = config('database.default');
-
-        $connectionConfigs = config("database.connections.$connection");
-
-        $capsule = new Capsule();
-        $capsule->addConnection([
-            'driver' => $connectionConfigs['driver'],
-            'host' => $connectionConfigs['host'],
-            'database' => $connectionConfigs['database'],
-            'username' => $connectionConfigs['username'],
-            'password' => $connectionConfigs['password'],
-            'charset' => $connectionConfigs['charset'],
-            'collation' => $connectionConfigs['collation'],
-            'prefix' => $connectionConfigs['prefix'],
-        ]);
-
-        $capsule->setAsGlobal();
-        $capsule->bootEloquent();
+        // Получаем объект соединения с базой данных
+        $db = $this->getDatabaseConnection();
 
         // Массив данных об авторах и книгах
         $authorsData = [
@@ -37,26 +27,35 @@ class AuthorsAndBooksSeeder extends AbstractSeed {
         ];
 
         // Добавление данных для остальных 19 авторов
-        for ($i = 1; $i <= 19; $i++) {
+        for ($i = 1; $i <= 60; $i++) {
             $authorsData[] = [
                 'name' => 'Автор ' . $i,
                 'books' => []
             ];
-            $numberOfBooks = rand(10, 20); // Случайное количество книг от 10 до 20
+            $numberOfBooks = rand(5, 10); // Случайное количество книг от 10 до 20
             for ($j = 1; $j <= $numberOfBooks; $j++) {
                 $authorsData[$i]['books'][] = [
                     'title' => 'Книга ' . $j . ' от автора ' . $i,
                     'description' => 'Описание книги ' . $j . ' от автора ' . $i,
-                    'published_year' => rand(1800, 2022) // Случайный год издания
+                    'published_year' => rand(1800, 2024) // Случайный год издания
                 ];
             }
         }
 
-        foreach ($authorsData as $authorData) {
-            $author = \App\Models\Author::create(['name' => $authorData['name']]);
+        $Author = new \App\Models\Author();
+        $bookClass = new \App\Models\Book();
+        $Author->setConnection($db);
+        $bookClass->setConnection($db);
 
+        foreach ($authorsData as $authorData) {
+            $author = $Author->create(['name' => $authorData['name']]);
             foreach ($authorData['books'] as $book) {
-                $author->books()->create($book);
+                $bookClass->create([
+                    'title' => $book['title'],
+                    'description' => $book['description'],
+                    'published_year' => $book['published_year'],
+                    'author_id' => $author['id'],
+                ]);
             }
         }
     }
