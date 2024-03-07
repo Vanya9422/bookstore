@@ -57,11 +57,12 @@ interface ModelInterface
     public function delete($id): bool;
 
     /**
-     * Реализация пагинации для модели.
+     * Реализует пагинацию для результатов запроса,
+     * включая подсчет связанных записей через колбэк.
      *
-     * @param int $perPage Количество элементов на страницу.
-     * @param int $currentPage Текущая страница.
-     * @return array Возвращает массив с результатами пагинации.
+     * @param int $perPage
+     * @param int $currentPage
+     * @return array
      */
     public function paginate(int $perPage = 1, int $currentPage = 1): array;
 
@@ -86,4 +87,15 @@ interface ModelInterface
      * @return void
      */
     public function setConnection($connection): void;
+
+    /**
+     * Добавляет JOIN к запросу.
+     *
+     * @param string $table
+     * @param string $first
+     * @param string $operator
+     * @param string $second
+     * @return $this
+     */
+    public function join(string $table, string $first, string $operator, string $second): static;
 }

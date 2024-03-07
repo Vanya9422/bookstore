@@ -32,6 +32,16 @@ interface RelationInterface
      */
     public function with(array|string $relations):  static;
 
+
+    /**
+     * Указывает связь, для которой нужно подсчитать количество записей, и опционально принимает
+     * функцию обратного вызова для кастомного SQL запроса.
+     * @param callable $callback Функция обратного вызова, возвращающая SQL подзапрос.
+     * @param string $relation
+     * @return $this
+     */
+    public function withCount(string $relation, callable $callback):  static;
+
     /**
      * Загружает указанные связи для результатов.
      *

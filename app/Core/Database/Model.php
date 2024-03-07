@@ -24,6 +24,16 @@ class Model implements ModelInterface, RelationInterface {
     protected static string $table;
 
     /**
+     * @var array Массив содержащий строки JOIN запросов.
+     */
+    protected array $joins = [];
+
+    /**
+     * @var array Массив названий связей, для которых необходимо подсчитать количество связанных записей.
+     */
+    protected array $relationsCounts = [];
+
+    /**
      * @var array Массив связей для загрузки с результатами
      */
     protected array $relations = [];
@@ -46,15 +56,19 @@ class Model implements ModelInterface, RelationInterface {
         $this->connection = $connection;
     }
 
+
     /**
-     * Реализует пагинацию для результатов запроса.
+     * Реализует пагинацию для результатов запроса,
+     * включая подсчет связанных записей через колбэк.
      *
-     * @param int $perPage Количество записей на страницу
-     * @param int $currentPage Номер текущей страницы
-     * @return array Массив с данными пагинации
+     * @param int $perPage
+     * @param int $currentPage
+     * @return array
      */
     public function paginate(int $perPage = 1, int $currentPage = 1): array {
         $table = self::getTable();
+
+        // Основной запрос для подсчета общего количества записей (без учета фильтров и JOIN'ов)
         $totalQuery = $this->connection->prepare("SELECT COUNT(*) FROM {$table}");
         $totalQuery->execute();
         $totalResults = $totalQuery->fetchColumn();
@@ -62,7 +76,26 @@ class Model implements ModelInterface, RelationInterface {
         $totalPages = ceil($totalResults / $perPage);
         $offset = ($currentPage - 1) * $perPage;
 
-        $stmt = $this->connection->prepare("SELECT * FROM {$table} LIMIT :perPage OFFSET :offset");
+        // Собираем части SQL запроса
+        $joinSql = implode(' ', $this->joins);
+
+        // Подготовка к добавлению подзапросов для подсчета связанных записей
+        $selectSql = "SELECT *";
+
+        $subQueries = [];
+        foreach ($this->relationsCounts as $relation => $callback) {
+            $subQuerySql = call_user_func($callback);
+            if ($subQuerySql) {
+                $subQueries[] = "{$subQuerySql} AS {$relation}_count";
+            }
+        }
+
+        if (!empty($subQueries)) {
+            $selectSql = "SELECT *, " . implode(', ', $subQueries);
+        }
+
+        $sql = "$selectSql FROM {$table} {$joinSql} LIMIT :perPage OFFSET :offset";
+        $stmt = $this->connection->prepare($sql);
         $stmt->bindParam(':perPage', $perPage, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -94,6 +127,32 @@ class Model implements ModelInterface, RelationInterface {
 
         $this->relations = array_merge($this->relations, $relations);
 
+        return $this;
+    }
+
+    /**
+     * Указывает связь, для которой нужно подсчитать количество записей, и опционально принимает
+     * функцию обратного вызова для кастомного SQL запроса.
+     * @param callable $callback Функция обратного вызова, возвращающая SQL подзапрос.
+     * @param string $relation
+     * @return $this
+     */
+    public function withCount(string $relation, callable $callback): static {
+        $this->relationsCounts[$relation] = $callback ?: $relation;
+        return $this;
+    }
+
+    /**
+     * Добавляет JOIN к запросу.
+     *
+     * @param string $table Таблица для JOIN.
+     * @param string $first Поле в основной таблице.
+     * @param string $operator Оператор сравнения.
+     * @param string $second Поле в присоединяемой таблице.
+     * @return $this
+     */
+    public function join(string $table, string $first, string $operator, string $second): static {
+        $this->joins[] = "JOIN $table ON $first $operator $second";
         return $this;
     }
 
