@@ -16,6 +16,8 @@ class Model implements ModelInterface, RelationInterface
 
     protected array $relations = [];
 
+    protected array $whereConditions = [];
+
     public function __construct() {
         $this->connection = Application::getContainer()?->get(DatabaseInterface::class)?->connect();
     }
@@ -86,7 +88,17 @@ class Model implements ModelInterface, RelationInterface
         return $this;
     }
 
-    protected function loadRelations(array $results): array {
+    protected function loadRelations(array|object $results) {
+        if (is_object($results)) {
+            foreach ($this->relations as $relation) {
+                if (method_exists($this, $relation)) {
+                    $results->{$relation} = $this->$relation();
+                }
+            }
+
+            return $results;
+        }
+
         $ids = array_column($results, 'id');
 
         foreach ($this->relations as $relation) {
@@ -101,6 +113,45 @@ class Model implements ModelInterface, RelationInterface
         return $results;
     }
 
+    public function where(string $column, $operator = null, $value = null): static {
+        if (func_num_args() == 2) {
+            $value = $operator;
+            $operator = '=';
+        }
+
+        $this->whereConditions[] = compact('column', 'operator', 'value');
+        return $this;
+    }
+
+    public function first() {
+        $table = self::getTable();
+        $conditions = [];
+        $bindings = [];
+
+        foreach ($this->whereConditions as $condition) {
+            $conditions[] = "{$condition['column']} {$condition['operator']} ?";
+            $bindings[] = $condition['value'];
+        }
+
+        $conditionsStr = implode(' AND ', $conditions);
+        $query = "SELECT * FROM {$table}" . ($conditionsStr ? " WHERE {$conditionsStr}" : '') . " LIMIT 1";
+        $stmt = $this->connection->prepare($query);
+        $stmt->execute($bindings);
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$data) return null;
+
+        $this->setAttributes($data);
+
+        // Загрузка связей, если они были указаны
+        if (!empty($this->relations)) {
+            return $this->loadRelations($this);
+        }
+
+        return $this;
+    }
+
     public function findAll(): array {
         $table = self::getTable();
         $stmt = $this->connection->query("SELECT * FROM $table");
@@ -112,7 +163,8 @@ class Model implements ModelInterface, RelationInterface
         $table = self::getTable();
         $stmt = $this->connection->prepare("SELECT * FROM {$table} WHERE id = :id");
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $this->setAttributes($result) : null;
     }
 
     public function create(array $data)
@@ -127,8 +179,7 @@ class Model implements ModelInterface, RelationInterface
         return $this->find($this->connection->lastInsertId());
     }
 
-    public function update($id, array $data)
-    {
+    public function update($id, array $data) {
         $setPart = implode(', ', array_map(function ($field) {
             return "{$field} = :{$field}";
         }, array_keys($data)));
@@ -140,13 +191,11 @@ class Model implements ModelInterface, RelationInterface
         return $this->find($id);
     }
 
-    public function delete($id): bool
-    {
+    public function delete($id): bool {
         $table = self::getTable();
         $stmt = $this->connection->prepare("DELETE FROM {$table} WHERE id = :id");
         return $stmt->execute(['id' => $id]);
     }
-
 
     public function hasMany(string $relatedClass, string $foreignKey, array $ids): array {
         // Подготовка списка плейсхолдеров для безопасного включения ID в запрос
@@ -163,6 +212,34 @@ class Model implements ModelInterface, RelationInterface
         }
         return $groupedResults;
     }
+
+    /**
+     * Определяет обратное отношение "многие к одному" между моделями.
+     * @param string $relatedClass
+     * @param string $foreignKey
+     * @param string $ownerKey
+     * @return ?object
+     */
+    public function belongsTo(string $relatedClass, string $foreignKey, string $ownerKey = 'id'): ?object {
+        $foreignKeyValue = $this->{$foreignKey};
+
+        if (!$foreignKeyValue) {
+            return null;
+        }
+
+        $stmt = $this->connection->prepare("SELECT * FROM {$relatedClass::getTable()} WHERE $ownerKey = :ownerKey LIMIT 1");
+        $stmt->execute(['ownerKey' => $foreignKeyValue]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$data) {
+            return null;
+        }
+
+        $relatedModel = new $relatedClass();
+
+        return $relatedModel->setAttributes($data);
+    }
+
 
     /**
      * Возвращает название таблицы модели.

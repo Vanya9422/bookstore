@@ -1,5 +1,5 @@
 <?php
 
-namespace App\Repository\Tasks;
+namespace App\Repository\Client;
 
 interface AuthorRepositoryInterface {}

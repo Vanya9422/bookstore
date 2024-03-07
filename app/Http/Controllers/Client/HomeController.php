@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Core\Request\Request;
 use App\Http\Controllers\BaseController;
-use App\Repository\Tasks\AuthorRepositoryInterface;
+use App\Repository\Client\AuthorRepositoryInterface;
 
 class HomeController extends BaseController {
 

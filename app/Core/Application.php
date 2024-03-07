@@ -3,13 +3,17 @@
 namespace App\Core;
 
 use App\Core\Contracts\ApplicationInterface;
+use App\Core\Contracts\BootstrapperInterface;
 use App\Core\Contracts\DatabaseInterface;
 use App\Core\Database\Database;
-use App\Repository\Tasks\AuthorRepository;
-use App\Repository\Tasks\AuthorRepositoryInterface;
+use App\Repository\Client\AuthorRepository;
+use App\Repository\Client\AuthorRepositoryInterface;
+use App\Repository\Client\BookRepository;
+use App\Repository\Client\BookRepositoryInterface;
+use App\Repository\Client\UserRepository;
+use App\Repository\Client\UserRepositoryInterface;
 use DI\Container;
 use DI\ContainerBuilder;
-use App\Core\Contracts\BootstrapperInterface;
 
 class Application implements ApplicationInterface {
 
@@ -24,17 +28,29 @@ class Application implements ApplicationInterface {
      * @throws \Exception
      */
     public function __construct() {
-        // Создаем новый экземпляр контейнера зависимостей
+        self::init();
+    }
+
+    /**
+     * Создаем новый экземпляр контейнера зависимостей
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public static function init(): void
+    {
         $containerBuilder = new ContainerBuilder();
 
         // Конфигурируем контейнер
         $containerBuilder->addDefinitions([
-            AuthorRepositoryInterface::class => \DI\autowire(AuthorRepository::class),
             DatabaseInterface::class => function () {
                 $connection = config('database.default');
                 $connectionConfigs = config("database.connections.$connection");
                 return new Database($connectionConfigs);
             },
+            AuthorRepositoryInterface::class => \DI\create(AuthorRepository::class),
+            UserRepositoryInterface::class => \DI\create(UserRepository::class),
+            BookRepositoryInterface::class => \DI\create(BookRepository::class)
         ]);
 
         static::$container = $containerBuilder->build();
@@ -50,12 +66,8 @@ class Application implements ApplicationInterface {
         }
     }
 
-    public static function isContainerInitialized(): bool {
-        return isset(self::$container);
-    }
-
     public static function getContainer(): ?Container {
-        if (self::isContainerInitialized()) {
+        if (isset(self::$container)) {
             return self::$container;
         }
 

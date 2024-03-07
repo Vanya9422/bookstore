@@ -103,4 +103,15 @@ if (!function_exists('config')) {
             }
         }
     }
+
+    if (!function_exists('back')) {
+        /**
+         * @return void
+         */
+        function back(): void
+        {
+            header('Location: ' . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+    }
 }

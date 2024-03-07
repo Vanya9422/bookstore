@@ -4,7 +4,7 @@ namespace App\Middleware;
 
 use App\Core\Contracts\MiddlewareInterface;
 
-class AuthMiddleware implements MiddlewareInterface {
+class IsAdminMiddleware implements MiddlewareInterface {
     public function handle() {
         if (!$this->isAuthenticated()) {
 //            header('Location: /login');

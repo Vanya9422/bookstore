@@ -2,20 +2,23 @@
 
 namespace App\Traits;
 
-use App\Core\Database\Database;
+use App\Core\Application;
+use App\Core\Contracts\DatabaseInterface;
 
 trait ConnectionAble
 {
     /**
      * @throws \Exception
      */
-    public function getDatabaseConnection()
-    {
-        $connection = config('database.default');
+    public function getDatabaseConnection() {
+        $container = Application::getContainer();
 
-        $connectionConfigs = config("database.connections.$connection");
+        if (!Application::getContainer()) {
+            Application::init();
+            $container = Application::getContainer();
+        }
 
-        $database = new Database($connectionConfigs);
+        $database = $container->get(DatabaseInterface::class);
 
         return $database->connect();
     }

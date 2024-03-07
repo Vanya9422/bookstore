@@ -54,7 +54,7 @@ class AuthorsAndBooksSeeder extends AbstractSeed
                     'title' => $book['title'],
                     'description' => $book['description'],
                     'published_year' => $book['published_year'],
-                    'author_id' => $author['id'],
+                    'author_id' => $author->id,
                 ]);
             }
         }

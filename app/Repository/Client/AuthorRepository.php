@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repository\Tasks;
+namespace App\Repository\Client;
 
 use App\Models\Author;
 use App\Repository\BaseRepository;

@@ -2,9 +2,12 @@
 
 namespace App\Core\Request;
 
+use App\Core\Application;
 use App\Core\Contracts\FormRequestInterface;
 use App\Core\Contracts\RequestInterface;
-use App\Exceptions\Validation\ValidationException;
+use App\Core\Contracts\SessionManagerInterface;
+use DI\DependencyException;
+use DI\NotFoundException;
 use Exception;
 use Respect\Validation\Validator;
 
@@ -12,19 +15,28 @@ abstract class FormRequest extends Request implements RequestInterface, FormRequ
     protected array $errors = [];
 
     /**
+     * @throws DependencyException
+     * @throws NotFoundException
+     */
+    public function __construct() {
+        parent::__construct();
+        $this->validate();
+    }
+
+    /**
      * Валидирует входные данные запроса с использованием правил, определенных в классе наследнике.
      *
-     * @throws ValidationException Если данные не прошли валидацию.
      * @return bool Возвращает true, если данные прошли валидацию успешно.
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     public function validate(): bool {
         $rules = $this->rules();
-        $validator = $this->getValidator();
 
         foreach ($rules as $field => $rule) {
             try {
                 // Проверяем каждое поле с его правилом
-                $validator::attribute($field, $rule)->assert($this->all());
+                $rule->assert($this->get($field));
             } catch (Exception $exception) {
                 // Собираем ошибки для каждого поля
                 $this->errors[$field] = $exception->getMessages();
@@ -32,8 +44,10 @@ abstract class FormRequest extends Request implements RequestInterface, FormRequ
         }
 
         if ($this->fails()) {
-            // Если есть ошибки, бросаем исключение с ними
-            throw new ValidationException($this->errors, "Validation errors");
+            $session = Application::getContainer()->get(SessionManagerInterface::class);
+            $session->set('validation_errors', $this->errors);
+            $session->set('old', $this->all());
+            back();
         }
 
         return true;
@@ -65,7 +79,7 @@ abstract class FormRequest extends Request implements RequestInterface, FormRequ
     }
 
     /**
-     * @throws ValidationException
+     * @return array
      */
     public function validated(): array
     {

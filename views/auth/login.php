@@ -6,9 +6,8 @@
 
     try {
         $session = Application::getContainer()->get(SessionManagerInterface::class);
-        $errors = $session->get('errors', []);
+        $errors = $session->get('validation_errors', []);
         $old = $session->get('old', []);
-        $successMessage = $session->get('success');
         // Предполагается, что 'errors' и 'old' уже извлечены выше, если это не так - извлекаем здесь
     } catch (\DI\DependencyException|\DI\NotFoundException $e) {
         // Обработка исключения
@@ -21,16 +20,24 @@
     <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/auth/login" method="POST">
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Почта</label>
-            <input class="shadow appearance-none border <?= isset($errors['email']) ? 'border-red-500' : '' ?> rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" name="email" type="email" placeholder="Почта" value="<?= htmlspecialchars($old['email'] ?? '') ?>">
+            <input class="shadow appearance-none border <?= isset($errors['email']) ? 'border-red-500' : '' ?> rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" name="email" type="email" placeholder="Почта" value="<?= htmlspecialchars($old['email'] ?? '') ?>" required>
             <?php if (!empty($errors['email'])): ?>
-                <p class="text-red-500"><?= htmlspecialchars($errors['email']['email'] ?? '') ?></p>
+                <div class="text-red-500 text-xs italic">
+                    <?php foreach ($errors['email'] as $error): ?>
+                        <p><?= htmlspecialchars($error) ?></p>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
         </div>
         <div class="mb-6">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Пароль</label>
-            <input class="shadow appearance-none border <?= isset($errors['password']) ? 'border-red-500' : '' ?> rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" name="password" type="password" placeholder="Пароль">
+            <input class="shadow appearance-none border <?= isset($errors['password']) ? 'border-red-500' : '' ?> rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" name="password" type="password" placeholder="Пароль" required>
             <?php if (!empty($errors['password'])): ?>
-                <p class="text-red-500 text-xs italic"><?= htmlspecialchars($errors['password']['password'] ?? '') ?></p>
+                <div class="text-red-500 text-xs italic">
+                    <?php foreach ($errors['password'] as $error): ?>
+                        <p><?= htmlspecialchars($error) ?></p>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
         </div>
         <div class="flex items-center justify-between">
@@ -41,4 +48,10 @@
     </form>
 </div>
 
-<?php include __DIR__ . '/../layouts/footer.php'; ?>
+<?php
+
+$session->clear();
+
+include __DIR__ . '/../layouts/footer.php';
+
+?>
