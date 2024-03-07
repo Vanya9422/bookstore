@@ -3,22 +3,18 @@
 namespace App\Middleware;
 
 use App\Core\Contracts\MiddlewareInterface;
+use App\Core\Session\SessionManager;
 
 class IsAdminMiddleware implements MiddlewareInterface {
     public function handle() {
-        if (!$this->isAuthenticated()) {
-//            header('Location: /login');
+        $sessionManager = new SessionManager();
 
-            $dbHost = env('DB_DATABASE');
+        $user = $sessionManager->authUser();
 
-            print_r($dbHost);
-
-            exit('Ashxatav Brats');
+        if (!$user->isAdmin()) {
+            $sessionManager->set('errors', ['Доступ запрещен. Требуются права администратора.']);
+            header('Location: /');
+            exit;
         }
-    }
-
-    private function isAuthenticated(): bool {
-        return false;
-//        return isset($_SESSION['user_id']);
     }
 }

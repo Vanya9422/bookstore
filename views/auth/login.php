@@ -5,7 +5,7 @@
     use App\Core\Contracts\SessionManagerInterface;
 
     try {
-        $session = Application::getContainer()->get(SessionManagerInterface::class);
+        $session = new \App\Core\Session\SessionManager();
         $errors = $session->get('validation_errors', []);
         $old = $session->get('old', []);
         // Предполагается, что 'errors' и 'old' уже извлечены выше, если это не так - извлекаем здесь
@@ -50,7 +50,8 @@
 
 <?php
 
-$session->clear();
+$session->delete('validation_errors');
+$session->delete('old');
 
 include __DIR__ . '/../layouts/footer.php';
 

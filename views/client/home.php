@@ -10,6 +10,8 @@
         </div>
 
         <div class="mt-6">
+            <?php include __DIR__ . '/../layouts/session_messages.php'; ?>
+
             <!-- Пагинация -->
             <nav class="flex justify-center pb-2">
                 <?php for ($i = 1; $i <= $authors['total_pages']; $i++): ?>
@@ -53,4 +55,7 @@
     </div>
 </main>
 
-<?php include __DIR__ . '/../layouts/footer.php';  ?>
+<?php
+(new \App\Core\Session\SessionManager)->delete('errors');
+include __DIR__ . '/../layouts/footer.php';
+?>

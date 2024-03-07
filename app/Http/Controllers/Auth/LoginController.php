@@ -21,17 +21,20 @@ class LoginController extends BaseController {
      * Обрабатывает попытку входа в систему.
      * @throws \Exception
      */
-    public function login(LoginRequest $request, UserRepository $repository, SessionManagerInterface $sessionManager): void {
-        try {
-            $email = $request->get('email');
-            $password = $request->get('password');
+    public function login(
+        LoginRequest $request,
+        UserRepository $repository,
+        SessionManagerInterface $sessionManager
+    ): void {
+        $email = $request->get('email');
+        $password = $request->get('password');
 
+        try {
             $user = $repository->findByEmail($email, ['role']);
 
             if (!$user) {
                 $sessionManager->set('validation_errors', ['email' => ["Пользователь с почтой $email не найден."]]);
                 $sessionManager->set('old', ['email' => $email]);
-
                 back();
             }
 
@@ -40,6 +43,8 @@ class LoginController extends BaseController {
                 $sessionManager->set('old', ['email' => $email]);
                 back();
             }
+
+            $sessionManager->setAuthUser($user);
 
             $this->redirect('/admin/dashboard');
         } catch (\Exception $e) {

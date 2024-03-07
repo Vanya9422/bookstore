@@ -9,10 +9,10 @@ use App\Core\Contracts\RouterInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * @method static get(string $url, string $controllerAndAction, array|string $middleware = null)
- * @method static post(string $url, string $controllerAndAction, array|string $middleware = null)
- * @method static delete(string $url, string $controllerAndAction, array|string $middleware = null)
- * @method static update(string $url, string $controllerAndAction, array|string $middleware = null)
+ * @method static get(string $url, string|callable $controllerAndAction, array|string $middleware = null)
+ * @method static post(string $url, string|callable $controllerAndAction, array|string $middleware = null)
+ * @method static delete(string $url, string|callable $controllerAndAction, array|string $middleware = null)
+ * @method static update(string $url, string|callable $controllerAndAction, array|string $middleware = null)
  */
 class Router implements RouterInterface
 {
@@ -71,6 +71,10 @@ class Router implements RouterInterface
                             $this->executeMiddleware($middleware);
                         }
                     }
+                }
+
+                if (is_callable($routeInfo['controller'])) {
+                    return call_user_func($routeInfo['controller']);
                 }
 
                 // Controller
@@ -146,14 +150,14 @@ class Router implements RouterInterface
      * Вызывает указанный метод контроллера, автоматически внедряя зависимости.
      *
      * @param ContainerInterface $container Контейнер зависимостей для автоматического внедрения.
-     * @param string $controller Имя класса контроллера.
+     * @param string|callable $controller Имя класса контроллера.
      * @param string|null $action Имя метода в контроллере для вызова.
      * @return mixed Результат выполнения метода контроллера.
      * @throws ContainerExceptionInterface Если контейнер не может вернуть элемент.
      * @throws NotFoundExceptionInterface Если элемент не найден в контейнере.
-     * @throws \Exception Если контроллер или метод не найдены, или параметры метода не могут быть разрешены.
+     * @throws \ReflectionException
      */
-    protected function callAction(ContainerInterface $container, string $controller, string $action = null)
+    protected function callAction(ContainerInterface $container, string|callable $controller, string $action = null)
     {
         // Проверяем существование класса контроллера
         if (!class_exists($controller)) {

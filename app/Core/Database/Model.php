@@ -195,6 +195,8 @@ class Model implements ModelInterface, RelationInterface {
             $this->loadRelations($this);
         }
 
+        $this->resetConditions();
+
         return $this;
     }
 
@@ -339,5 +341,9 @@ class Model implements ModelInterface, RelationInterface {
         }
 
         return $results;
+    }
+
+    public function resetConditions(): void {
+        $this->whereConditions = [];
     }
 }

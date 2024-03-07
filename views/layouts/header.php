@@ -1,4 +1,13 @@
 <!-- header.php -->
+
+<?php
+    $sessionManager = new \App\Core\Session\SessionManager();
+
+    $AuthUser = $sessionManager->authUser();
+
+    $isLoggedIn = $sessionManager->authCheck()
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +25,14 @@
                 <a href="/" class="text-gray-800 text-xl font-bold">Моя библиотека</a>
                 <div class="flex items-center">
                     <a href="/" class="<?= $activePage == 'home' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Главная</a>
-                    <a href="auth/login" class="<?= $activePage == 'login' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Вход</a>
+                    <?php if ($isLoggedIn): ?>
+                        <form action="/auth/logout" method="POST" style="display: inline;">
+                            <button type="submit" class="text-gray-800 hover:text-indigo-600">Выход</button>
+                        </form>
+                        <span class="mx-4 text-black"><?= htmlspecialchars($AuthUser->name) ?> </span>
+                    <?php else: ?>
+                        <a href="/auth/login" class="<?= $activePage == 'login' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Вход</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </nav>

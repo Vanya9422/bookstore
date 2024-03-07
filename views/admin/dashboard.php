@@ -1,4 +1,8 @@
-<?php include __DIR__ . '/../layouts/header.php'; ?>
+<?php
+
+include __DIR__ . '/../layouts/header.php';
+
+?>
 
 <div class="container mx-auto px-4">
     <h1 class="text-2xl font-bold text-gray-900 pt-6">Дашборд администратора</h1>
