@@ -2,15 +2,10 @@
 
 namespace App\Core\Contracts;
 
+use App\Core\Database\Model;
+
 interface ModelInterface
 {
-    /**
-     * Найти и вернуть все записи из таблицы.
-     *
-     * @return array Массив всех записей.
-     */
-    public function findAll(): array;
-
     /**
      * Найти и вернуть запись по идентификатору.
      *
@@ -20,12 +15,29 @@ interface ModelInterface
     public function find($id);
 
     /**
+     * Получает первую запись, соответствующую условиям выборки.
+     *
+     * @return ?Model
+     */
+    public function first(): ?Model;
+
+    /**
      * Создать новую запись в таблице с данными $data.
      *
      * @param array $data Ассоциативный массив данных для создания записи.
      * @return mixed Созданная запись.
      */
     public function create(array $data);
+
+    /**
+     * Добавляет условия для WHERE запроса.
+     *
+     * @param string $column
+     * @param $operator
+     * @param $value
+     * @return $this
+     */
+    public function where(string $column, $operator = null, $value = null): static;
 
     /**
      * Обновить запись с идентификатором $id данными $data.
