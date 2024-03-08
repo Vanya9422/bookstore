@@ -6,7 +6,7 @@ use App\Core\Request\Request;
 use App\Http\Controllers\BaseController;
 use App\Repository\Client\BookRepositoryInterface;
 
-class ListBookController extends BaseController
+class BookListController extends BaseController
 {
     /**
      * Показывает страницу входа.

@@ -14,6 +14,12 @@ use PDO;
 class Model implements ModelInterface, RelationInterface {
 
     /**
+     * По умолчанию выбираются все поля
+     * @var string
+     */
+    protected string $selectedFields = "*";
+
+    /**
      * @var ?PDO Соединение с базой данных
      */
     protected ?PDO $connection;
@@ -56,6 +62,21 @@ class Model implements ModelInterface, RelationInterface {
         $this->connection = $connection;
     }
 
+    /**
+     * Устанавливает поля для выборки.
+     *
+     * @param array|string $fields
+     * @return $this
+     */
+    public function select(array|string $fields): static {
+        if (is_array($fields)) {
+            $this->selectedFields = implode(", ", $fields);
+        } else {
+            $this->selectedFields = $fields;
+        }
+
+        return $this;
+    }
 
     /**
      * Реализует пагинацию для результатов запроса,
@@ -76,32 +97,34 @@ class Model implements ModelInterface, RelationInterface {
         $totalPages = ceil($totalResults / $perPage);
         $offset = ($currentPage - 1) * $perPage;
 
-        // Собираем части SQL запроса
-        $joinSql = implode(' ', $this->joins);
+        // Инициализируем строку SELECT с учетом выбранных полей
+        $selectSql = $this->selectedFields !== "*" ? "SELECT {$this->selectedFields}" : "SELECT {$table}.*";
 
-        // Подготовка к добавлению подзапросов для подсчета связанных записей
-        $selectSql = "SELECT *";
-
+        // Обрабатываем подзапросы для подсчета связанных записей, если они есть
         $subQueries = [];
         foreach ($this->relationsCounts as $relation => $callback) {
             $subQuerySql = call_user_func($callback);
             if ($subQuerySql) {
-                $subQueries[] = "{$subQuerySql} AS {$relation}_count";
+                $subQueries[] = "($subQuerySql) AS {$relation}_count";
             }
         }
 
         if (!empty($subQueries)) {
-            $selectSql = "SELECT *, " . implode(', ', $subQueries);
+            $selectSql .= ", " . implode(', ', $subQueries);
         }
 
-        $sql = "$selectSql FROM {$table} {$joinSql} LIMIT :perPage OFFSET :offset";
+        // Объединяем части SQL запроса
+        $joinSql = implode(' ', $this->joins);
+        $sql = "{$selectSql} FROM {$table} {$joinSql} LIMIT :perPage OFFSET :offset";
+
         $stmt = $this->connection->prepare($sql);
         $stmt->bindParam(':perPage', $perPage, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (!empty($this->relations)) {
+        // Загружаем связи, если они указаны
+        if (!empty($this->relations) && !empty($results)) {
             $results = $this->loadRelations($results);
         }
 
@@ -181,10 +204,31 @@ class Model implements ModelInterface, RelationInterface {
      * @return ?Model
      */
     public function find($id): ?static {
-        $table = self::getTable();
-        $stmt = $this->executeQuery("SELECT * FROM ". $table ." WHERE id = :id", ['id' => $id]);
+        $stmt = $this->executeQuery("SELECT * FROM ". self::getTable() ." WHERE id = :id", ['id' => $id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!empty($this->relations) && !empty($result)) {
+            $result = $this->loadRelations([$result])[0];
+        }
+
         return $result ? $this->setAttributes($result) : null;
+    }
+
+    /**
+     * Получает все записи из таблицы модели.
+     *
+     * @return array
+     */
+    public function all(): array {
+        $table = self::getTable();
+        $stmt = $this->executeQuery("SELECT * FROM {$table}");
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!empty($this->relations) && !empty($results)) {
+            $results = $this->loadRelations($results);
+        }
+
+        return $results;
     }
 
     /**
@@ -217,6 +261,7 @@ class Model implements ModelInterface, RelationInterface {
         $setPart = implode(', ', array_map(function ($field) {
             return "$field = :$field";
         }, array_keys($data)));
+
         $data['id'] = $id;
 
         $this->executeQuery("UPDATE $table SET $setPart WHERE id = :id", $data);
@@ -316,6 +361,7 @@ class Model implements ModelInterface, RelationInterface {
      */
     protected function executeQuery(string $sql, array $params = []): ?\PDOStatement {
         $stmt = $this->connection->prepare($sql);
+
         $stmt->execute($params);
         return $stmt;
     }

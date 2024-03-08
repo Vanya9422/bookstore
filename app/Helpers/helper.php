@@ -106,11 +106,19 @@ if (!function_exists('config')) {
 
     if (!function_exists('back')) {
         /**
+         * Возвращает пользователя на предыдущую страницу с возможностью добавления сообщения в сессию.
+         *
+         * @param string|array|null $message
+         * @param string $type
          * @return void
          */
-        function back(): void
-        {
+        function back(string|array $message = null, string $type = 'success'): void {
+            if ($message) {
+                session()->set($type, $message);
+            }
+
             header('Location: ' . $_SERVER['HTTP_REFERER']);
+
             exit;
         }
     }
@@ -151,6 +159,33 @@ if (!function_exists('config')) {
             if (!$full) $string = array_slice($string, 0, 1);
 
             return $string ? implode(', ', $string) . ' назад' : 'только что';
+        }
+    }
+
+    if (!function_exists('formErrors')) {
+        /**
+         * @return array
+         */
+        function formErrors(): array
+        {
+            try {
+                $errors = session()->get('validation_errors', []);
+                $old = session()->get('old', []);
+                return [$errors, $old];
+            } catch (\DI\DependencyException|\DI\NotFoundException $e) {
+                echo $e->getMessage();
+            }
+        }
+    }
+
+    if (!function_exists('session')) {
+        /**
+         * @return \App\Core\Session\SessionManager
+         */
+        function session(): \App\Core\Session\SessionManager {
+            static $sessionInstance;
+            if (!$sessionInstance) $sessionInstance = new \App\Core\Session\SessionManager();
+            return $sessionInstance;
         }
     }
 }

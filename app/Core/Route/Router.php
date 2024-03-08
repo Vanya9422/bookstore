@@ -12,7 +12,7 @@ use Psr\Container\NotFoundExceptionInterface;
  * @method static get(string $url, string|callable $controllerAndAction, array|string $middleware = null)
  * @method static post(string $url, string|callable $controllerAndAction, array|string $middleware = null)
  * @method static delete(string $url, string|callable $controllerAndAction, array|string $middleware = null)
- * @method static update(string $url, string|callable $controllerAndAction, array|string $middleware = null)
+ * @method static put(string $url, string|callable $controllerAndAction, array|string $middleware = null)
  */
 class Router implements RouterInterface
 {
@@ -44,12 +44,13 @@ class Router implements RouterInterface
     }
 
     /**
-     * Обрабатываем запрос
+     * Обрабатывает запрос и определяет маршрут для исполнения.
      *
      * @param ContainerInterface $container
-     * @return void
+     * @return mixed|void
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     * @throws \ReflectionException
      * @throws \Exception
      */
     public function dispatch(ContainerInterface $container)
@@ -58,32 +59,99 @@ class Router implements RouterInterface
         $method = $this->getMethod();
 
         foreach (static::getInstance()->routes[$method] as $routeUri => $routeInfo) {
-            if (preg_match('#^' . $routeUri . '$#', $uri, $matches)) {
-                // Middleware
+            $routePattern = preg_replace('#\{([a-z_]+)\}#', '(?<$1>[^/]+)', $routeUri);
+            if (preg_match('#^' . $routePattern . '$#', $uri, $matches)) {
 
+                // Извлекаем и удаляем полный патч, оставляя только именованные параметры
+                array_shift($matches);
+
+                // Middleware
                 if (isset($routeInfo['middleware'])) {
                     foreach ($routeInfo['middleware'] as $middleware) {
                         if (is_array($middleware)) {
                             foreach ($middleware as $middlewareItem) {
-                                $this->executeMiddleware($middlewareItem);
+                                $this->executeMiddleware($middlewareItem, $container);
                             }
                         } else {
-                            $this->executeMiddleware($middleware);
+                            $this->executeMiddleware($middleware, $container);
                         }
                     }
                 }
 
                 if (is_callable($routeInfo['controller'])) {
-                    return call_user_func($routeInfo['controller']);
+                    // Для вызываемых контроллеров передаем параметры из URL
+                    return call_user_func_array($routeInfo['controller'], $matches);
                 }
 
-                // Controller
-                return $this->callAction($container, ...explode('@', $routeInfo['controller']));
+                $controllerAction = explode('@', $routeInfo['controller']);
+                if (count($controllerAction) === 1) {
+                    return $this->callAction($container, $controllerAction[0], '__invoke', $matches);
+                } else {
+                    return $this->callAction($container, $controllerAction[0], $controllerAction[1], $matches);
+                }
             }
         }
 
         // Если маршрут не найден
         $this->sendNotFound();
+    }
+
+    /**
+     * Вызывает указанный метод контроллера, автоматически внедряя зависимости и передавая динамические параметры из URL.
+     *
+     * Этот метод автоматически инжектирует зависимости, определенные в методе контроллера, используя контейнер зависимостей.
+     * Кроме того, он передает динамические параметры, извлеченные из URL (например, {id} или {author_id}), непосредственно в метод контроллера.
+     *
+     * @param ContainerInterface $container Контейнер зависимостей для автоматического внедрения.
+     * @param string $controller Имя класса контроллера или вызываемый объект.
+     * @param string|null $action Имя метода в контроллере для вызова. Если не указано, используется метод __invoke.
+     * @param array $routeParams Ассоциативный массив параметров из URL, которые должны быть переданы в метод контроллера.
+     *
+     * @return mixed Результат выполнения метода контроллера.
+     *
+     * @throws ContainerExceptionInterface Если контейнер не может вернуть элемент.
+     * @throws NotFoundExceptionInterface Если элемент не найден в контейнере.
+     * @throws \Exception Если класс контроллера не найден, метод контроллера не существует или не удается разрешить параметр метода.
+     * @throws \ReflectionException Если произошла ошибка при использовании Reflection.
+     */
+    protected function callAction(ContainerInterface $container, string $controller, ?string $action, array $routeParams = []): mixed {
+
+        // Проверяем существование класса контроллера
+        if (!class_exists($controller)) {
+            throw new \Exception("Controller {$controller} not found.");
+        }
+
+        // Получаем экземпляр контроллера из контейнера
+        $controllerInstance = $container->get($controller);
+
+        // Определяем метод для вызова
+        $methodName = $action ?? '__invoke';
+        if (!method_exists($controllerInstance, $methodName)) {
+            throw new \Exception("{$controller} does not respond to the {$methodName} action.");
+        }
+
+        // Анализируем параметры метода с использованием рефлексии
+        $method = new \ReflectionMethod($controllerInstance, $methodName);
+        $parameters = $method->getParameters();
+
+        // Подготавливаем аргументы для вызова метода
+        $args = [];
+        foreach ($parameters as $parameter) {
+            $parameterType = $parameter->getType();
+            $parameterName = $parameter->getName();
+
+            // Проверяем, передан ли параметр из маршрута
+            if (array_key_exists($parameterName, $routeParams)) {
+                $args[] = $routeParams[$parameterName];
+            } elseif ($container->has($parameterType->getName())) {
+                $args[] = $container->get($parameterType->getName());
+            } else {
+                throw new \Exception("Cannot resolve the parameter `{$parameterName}` in method `{$methodName}` of controller `{$controller}`.");
+            }
+        }
+
+        // Вызываем метод контроллера с подготовленными аргументами
+        return $method->invokeArgs($controllerInstance, $args);
     }
 
     /**
@@ -147,56 +215,6 @@ class Router implements RouterInterface
     }
 
     /**
-     * Вызывает указанный метод контроллера, автоматически внедряя зависимости.
-     *
-     * @param ContainerInterface $container Контейнер зависимостей для автоматического внедрения.
-     * @param string|callable $controller Имя класса контроллера.
-     * @param string|null $action Имя метода в контроллере для вызова.
-     * @return mixed Результат выполнения метода контроллера.
-     * @throws ContainerExceptionInterface Если контейнер не может вернуть элемент.
-     * @throws NotFoundExceptionInterface Если элемент не найден в контейнере.
-     * @throws \ReflectionException
-     */
-    protected function callAction(ContainerInterface $container, string|callable $controller, string $action = null)
-    {
-        // Проверяем существование класса контроллера
-        if (!class_exists($controller)) {
-            throw new \Exception("Controller {$controller} not found.");
-        }
-
-        // Получаем экземпляр контроллера из контейнера
-        $controllerInstance = $container->get($controller);
-
-        // Определяем метод для вызова
-        $methodName = $action ?? '__invoke';
-        if (!method_exists($controllerInstance, $methodName)) {
-            throw new \Exception("{$controller} does not respond to the {$methodName} action.");
-        }
-
-        // Анализируем параметры метода с использованием рефлексии
-        $method = new \ReflectionMethod($controllerInstance, $methodName);
-        $parameters = $method->getParameters();
-
-        // Подготавливаем аргументы для вызова метода
-        $args = [];
-        foreach ($parameters as $parameter) {
-            $parameterType = $parameter->getType();
-            if (!$parameterType) {
-                throw new \Exception("Cannot resolve the parameter `{$parameter->getName()}` in method `{$methodName}` of controller `{$controller}`. Type hint is missing.");
-            }
-            $parameterTypeName = $parameterType->getName();
-            if ($container->has($parameterTypeName)) {
-                $args[] = $container->get($parameterTypeName);
-            } else {
-                throw new \Exception("The required service `{$parameterTypeName}` is not configured in the container.");
-            }
-        }
-
-        // Вызываем метод контроллера с подготовленными аргументами
-        return $method->invokeArgs($controllerInstance, $args);
-    }
-
-    /**
      * @throws \Exception
      */
     private function executeMiddleware(string $middleware): void
@@ -239,9 +257,21 @@ class Router implements RouterInterface
         return static::getInstance();
     }
 
-    protected function getMethod()
+    /**
+     * Извлекает HTTP метод из глобальной переменной $_SERVER или из переопределенного значения в $_POST['_method'].
+     *
+     * @return string Возвращаемый HTTP метод.
+     */
+    protected function getMethod(): string
     {
-        return $_SERVER['REQUEST_METHOD'];
+        $method = $_SERVER['REQUEST_METHOD'];
+
+        // Поддержка переопределения метода через скрытое поле _method для форм.
+        if ($method === 'POST' && isset($_POST['_method'])) {
+            $method = $_POST['_method'];
+        }
+
+        return strtoupper($method);
     }
 
     /**

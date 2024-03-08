@@ -22,12 +22,21 @@ interface ModelInterface
     public function first(): ?Model;
 
     /**
-     * Создать новую запись в таблице с данными $data.
+     * Получает все записи из таблицы модели.
      *
-     * @param array $data Ассоциативный массив данных для создания записи.
-     * @return mixed Созданная запись.
+     * @return array
      */
-    public function create(array $data);
+    public function all(): array;
+
+    /**
+     * Реализует пагинацию для результатов запроса,
+     * включая подсчет связанных записей через колбэк.
+     *
+     * @param int $perPage
+     * @param int $currentPage
+     * @return array
+     */
+    public function paginate(int $perPage = 1, int $currentPage = 1): array;
 
     /**
      * Добавляет условия для WHERE запроса.
@@ -38,6 +47,22 @@ interface ModelInterface
      * @return $this
      */
     public function where(string $column, $operator = null, $value = null): static;
+
+    /**
+     *  Устанавливает поля для выборки.
+     *
+     * @param array|string $fields
+     * @return static
+     */
+    public function select(array|string $fields): static;
+
+    /**
+     * Создать новую запись в таблице с данными $data.
+     *
+     * @param array $data Ассоциативный массив данных для создания записи.
+     * @return mixed Созданная запись.
+     */
+    public function create(array $data);
 
     /**
      * Обновить запись с идентификатором $id данными $data.
@@ -55,16 +80,6 @@ interface ModelInterface
      * @return bool Возвращает true, если удаление прошло успешно.
      */
     public function delete($id): bool;
-
-    /**
-     * Реализует пагинацию для результатов запроса,
-     * включая подсчет связанных записей через колбэк.
-     *
-     * @param int $perPage
-     * @param int $currentPage
-     * @return array
-     */
-    public function paginate(int $perPage = 1, int $currentPage = 1): array;
 
     /**
      * Возвращает название таблицы модели.

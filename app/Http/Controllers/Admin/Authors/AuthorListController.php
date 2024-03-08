@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin\Authors;
 
 use App\Core\Request\Request;
 use App\Http\Controllers\BaseController;
@@ -22,7 +22,7 @@ class AuthorListController extends BaseController
 
         $authors = $authorRepository->authorPaginate($perPage, $currentPage);
 
-        $this->view('admin/authors', [
+        $this->view('admin/authors/list', [
             'list' => $authors,
             'activePage' => 'authors'
         ]);

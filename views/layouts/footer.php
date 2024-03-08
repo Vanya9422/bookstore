@@ -5,3 +5,12 @@
 <!-- /footer.php -->
 </body>
 </html>
+
+<?php
+
+session()->delete('validation_errors');
+session()->delete('old');
+session()->delete('success');
+session()->delete('errors');
+
+?>

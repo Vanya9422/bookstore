@@ -11,6 +11,6 @@ class DashboardViewController extends BaseController {
      * @throws \Exception
      */
     public function __invoke(): void {
-        $this->view('admin/dashboard', ['activePage' => 'login']);
+        $this->view('admin/dashboard', ['activePage' => 'dashboard']);
     }
 }

@@ -5,7 +5,9 @@
 
     $AuthUser = $sessionManager->authUser();
 
-    $isLoggedIn = $sessionManager->authCheck()
+    $isLoggedIn = $sessionManager->authCheck();
+
+    if(!isset($activePage)) $activePage = '';
 ?>
 
 <!DOCTYPE html>
@@ -26,12 +28,15 @@
                 <div class="flex items-center">
                     <a href="/" class="<?= $activePage == 'home' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Главная</a>
                     <?php if ($isLoggedIn): ?>
-                        <a href="/admin/books" class="<?= $activePage == 'books' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Книги</a>
-                        <a href="/admin/authors" class="<?= $activePage == 'authors' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Авторы</a>
-                        <form action="/auth/logout" method="POST" style="display: inline;">
-                            <button type="submit" class="text-gray-800 hover:text-indigo-700">Выход</button>
+                        <a href="/admin/dashboard" class="<?= $activePage == 'dashboard' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Дашборд</a>
+                        <a href="/admin/books" class="<?= $activePage == 'books' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Лист Книг</a>
+                        <a href="/admin/books/create" class="<?= $activePage == 'create_books' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Добавить Книгу</a>
+                        <a href="/admin/authors" class="<?= $activePage == 'authors' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Список Авторов</a>
+                        <a href="/admin/authors/create" class="<?= $activePage == 'create_authors' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Добавить Автора</a>
+                        <form action="/auth/logout" method="POST">
+                            <button type="submit" class="text-gray-800 hover:text-indigo-700 ml-20"><b>Выход</b></button>
                         </form>
-                        <span class="mx-4 ml-20 text-black"> <b><?= htmlspecialchars($AuthUser->name) ?></b> </span>
+                        <span class="mx-4 text-black"> <b><?= htmlspecialchars($AuthUser->name) ?></b> </span>
                     <?php else: ?>
                         <a href="/auth/login" class="<?= $activePage == 'login' ? 'text-indigo-600' : 'text-gray-800 hover:text-indigo-600'; ?> mx-4">Вход</a>
                     <?php endif; ?>

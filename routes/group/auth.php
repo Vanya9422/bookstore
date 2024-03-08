@@ -12,8 +12,7 @@ Router::group(['prefix' => 'auth'], function () {
     });
 
     Router::post('logout', function () {
-        $sessionManager = new \App\Core\Session\SessionManager();
-        $sessionManager->deleteUser();
+        session()->deleteUser();
         header('Location: /auth/login');
         exit;
     }, \App\Middleware\AuthMiddleware::class);

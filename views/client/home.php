@@ -36,8 +36,4 @@
         <?php include __DIR__ . '/../layouts/pagination.php'; ?>
     </div>
 </main>
-
-<?php
-(new \App\Core\Session\SessionManager)->delete('errors');
-include __DIR__ . '/../layouts/footer.php';
-?>
+<?php include __DIR__ . '/../layouts/footer.php'; ?>

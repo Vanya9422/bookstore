@@ -22,6 +22,7 @@ class BookRepository extends BaseRepository implements BookRepositoryInterface {
     public function bookPaginate(int $perPage, ?int $currentPage = 1): array {
         return $this
             ->getModel()
+            ->select(['books.*', 'authors.name'])
             ->join('authors', 'books.author_id', '=', 'authors.id')
             ->paginate($perPage, $currentPage);
     }
