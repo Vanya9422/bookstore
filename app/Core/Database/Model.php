@@ -5,7 +5,9 @@ namespace App\Core\Database;
 use App\Core\Application;
 use App\Core\Contracts\DatabaseInterface;
 use App\Core\Contracts\ModelInterface;
+use App\Core\Contracts\PaginationInterface;
 use App\Core\Contracts\RelationInterface;
+use App\Core\Pagination\Paginator;
 use PDO;
 
 /**
@@ -84,9 +86,9 @@ class Model implements ModelInterface, RelationInterface {
      *
      * @param int $perPage
      * @param int $currentPage
-     * @return array
+     * @return PaginationInterface
      */
-    public function paginate(int $perPage = 1, int $currentPage = 1): array {
+    public function paginate(int $perPage = 1, int $currentPage = 1): PaginationInterface {
         $table = self::getTable();
 
         // Основной запрос для подсчета общего количества записей (без учета фильтров и JOIN'ов)
@@ -128,13 +130,13 @@ class Model implements ModelInterface, RelationInterface {
             $results = $this->loadRelations($results);
         }
 
-        return [
+        return new Paginator([
             'data' => $results,
             'total' => $totalResults,
             'per_page' => $perPage,
             'current_page' => $currentPage,
             'total_pages' => $totalPages,
-        ];
+        ]);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Core\Contracts\PaginationInterface;
 use App\Core\Database\Model;
 use App\Exceptions\Repository\RepositoryException;
 use App\Repository\Contracts\RepositoryInterface;
@@ -114,9 +115,10 @@ abstract class BaseRepository implements RepositoryInterface
      * @param int $perPage Количество записей на страницу.
      * @param ?int $currentPage Текущая страница.
      * @param array $relations
-     * @return array Результаты пагинации.
+     * @return PaginationInterface Результаты пагинации.
      */
-    public function paginate(int $perPage, ?int $currentPage = 1, array $relations = []): array {
+    public function paginate(int $perPage, ?int $currentPage = 1, array $relations = []): PaginationInterface
+    {
         return $this->getModel()->with($relations)->paginate($perPage, $currentPage);
     }
 

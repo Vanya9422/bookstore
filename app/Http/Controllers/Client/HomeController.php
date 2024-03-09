@@ -23,6 +23,6 @@ class HomeController extends BaseController {
         // Получение авторов с их книгами с пагинацией
         $authors = $authorRepository->paginate($perPage, $currentPage, ['books']);
 
-        $this->view('client/home', ['list' => $authors, 'activePage' => 'home']);
+        $this->view('client/home', ['paginator' => $authors, 'activePage' => 'home']);
     }
 }

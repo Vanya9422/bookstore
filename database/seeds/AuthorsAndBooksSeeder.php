@@ -32,7 +32,7 @@ class AuthorsAndBooksSeeder extends AbstractSeed
                 'name' => 'Автор ' . $i,
                 'books' => []
             ];
-            $numberOfBooks = rand(5, 10); // Случайное количество книг от 10 до 20
+            $numberOfBooks = rand(2, 7); // Случайное количество книг от 10 до 20
             for ($j = 1; $j <= $numberOfBooks; $j++) {
                 $authorsData[$i]['books'][] = [
                     'title' => 'Книга ' . $j . ' от автора ' . $i,

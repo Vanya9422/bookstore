@@ -24,6 +24,6 @@ class BookListController extends BaseController
         // Получение авторов с их книгами с пагинацией
         $books = $bookRepository->bookPaginate($perPage, $currentPage);
 
-        $this->view('admin/books/list', ['list' => $books,'activePage' => 'books']);
+        $this->view('admin/books/list', ['paginator' => $books,'activePage' => 'books']);
     }
 }

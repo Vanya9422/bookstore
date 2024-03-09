@@ -188,4 +188,22 @@ if (!function_exists('config')) {
             return $sessionInstance;
         }
     }
+
+    if (!function_exists('jsone')) {
+
+        function jsone() {
+            return new class {
+                public function response($data, $status = 200, $headers = []) {
+                    header('Content-Type: application/json', true, $status);
+
+                    foreach ($headers as $key => $value) {
+                        header("$key: $value");
+                    }
+
+                    echo json_encode($data);
+                    exit;
+                }
+            };
+        }
+    }
 }

@@ -4,6 +4,9 @@
     <div class="py-8">
         <div class="flex flex-wrap mb-6 justify-between items-center">
             <h1 class="text-2xl font-semibold text-gray-700">Авторы</h1>
+            <div class="text-end">
+                <p class="text-xs text-gray-500">Страница <?= $paginator->getCurrentPage() ?> из <?= $paginator->getTotalPages() ?></p>
+            </div>
         </div>
 
         <div class="w-100 mt-2 mb-2">
@@ -14,7 +17,7 @@
             <?php include __DIR__ . '/../../layouts/pagination.php'; ?>
 
             <!-- Вывод списка книг -->
-            <?php if (empty($list['data'])): ?>
+            <?php if (empty($paginator->getItems())): ?>
                 <p class="text-gray-700 text-center">Книги не найдены.</p>
             <?php else: ?>
                 <table class="min-w-full divide-y divide-gray-200 mt-10">
@@ -32,7 +35,7 @@
                     </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                    <?php foreach ($list['data'] as $author): ?>
+                    <?php foreach ($paginator->getItems() as $author): ?>
                         <tr class="hover:bg-gray-50 cursor-pointer">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <strong class="text-indigo-600"><?= htmlspecialchars($author['name']) ?></strong>

@@ -2,6 +2,7 @@
 
 namespace App\Repository\Client;
 
+use App\Core\Contracts\PaginationInterface;
 use App\Models\Author;
 use App\Repository\BaseRepository;
 
@@ -17,9 +18,9 @@ class AuthorRepository extends BaseRepository implements AuthorRepositoryInterfa
     /**
      * @param int $perPage
      * @param int|null $currentPage
-     * @return array
+     * @return PaginationInterface
      */
-    public function authorPaginate(int $perPage, ?int $currentPage = 1): array {
+    public function authorPaginate(int $perPage, ?int $currentPage = 1): PaginationInterface {
         return $this
             ->getModel()
             ->withCount('books', function () {

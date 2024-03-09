@@ -2,6 +2,7 @@
 
 namespace App\Repository\Contracts;
 
+use App\Core\Contracts\PaginationInterface;
 use App\Core\Database\Model;
 
 /**
@@ -50,9 +51,9 @@ interface RepositoryInterface
      * @param ?int $currentPage Номер текущей страницы, по умолчанию 1.
      * @param array $relations Массив связей, которые нужно подгрузить с результатами.
      *
-     * @return array
+     * @return PaginationInterface
      */
-    public function paginate(int $perPage, ?int $currentPage = 1, array $relations = []): array;
+    public function paginate(int $perPage, ?int $currentPage = 1, array $relations = []): PaginationInterface;
 
     /**
      * Получает все записи.

@@ -23,7 +23,7 @@ class AuthorListController extends BaseController
         $authors = $authorRepository->authorPaginate($perPage, $currentPage);
 
         $this->view('admin/authors/list', [
-            'list' => $authors,
+            'paginator' => $authors,
             'activePage' => 'authors'
         ]);
     }

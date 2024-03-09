@@ -2,10 +2,8 @@
 
 namespace App\Core\Request;
 
-use App\Core\Application;
 use App\Core\Contracts\FormRequestInterface;
 use App\Core\Contracts\RequestInterface;
-use App\Core\Contracts\SessionManagerInterface;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
@@ -44,10 +42,16 @@ abstract class FormRequest extends Request implements RequestInterface, FormRequ
         }
 
         if ($this->fails()) {
-            $session = Application::getContainer()->get(SessionManagerInterface::class);
-            $session->set('validation_errors', $this->errors);
-            $session->set('old', $this->all());
-            back();
+            // Проверяем, ожидается ли JSON ответ
+            if ($this->isJsonExpected()) {
+                header('Content-Type: application/json');
+                echo json_encode(['errors' => $this->errors]);
+                exit;
+            } else {
+                session()->set('validation_errors', $this->errors);
+                session()->set('old', $this->all());
+                back();
+            }
         }
 
         return true;
@@ -100,5 +104,14 @@ abstract class FormRequest extends Request implements RequestInterface, FormRequ
      */
     public function getValidator(): Validator {
         return new Validator();
+    }
+
+    /**
+     * Метод для проверки, ожидается ли JSON ответ
+     *
+     * @return bool
+     */
+    protected function isJsonExpected(): bool {
+        return str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
     }
 }

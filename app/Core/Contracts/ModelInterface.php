@@ -34,9 +34,9 @@ interface ModelInterface
      *
      * @param int $perPage
      * @param int $currentPage
-     * @return array
+     * @return PaginationInterface
      */
-    public function paginate(int $perPage = 1, int $currentPage = 1): array;
+    public function paginate(int $perPage = 1, int $currentPage = 1): PaginationInterface;
 
     /**
      * Добавляет условия для WHERE запроса.

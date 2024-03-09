@@ -2,6 +2,7 @@
 
 namespace App\Repository\Client;
 
+use App\Core\Contracts\PaginationInterface;
 use App\Models\Book;
 use App\Repository\BaseRepository;
 
@@ -17,9 +18,9 @@ class BookRepository extends BaseRepository implements BookRepositoryInterface {
     /**
      * @param int $perPage
      * @param int|null $currentPage
-     * @return array
+     * @return PaginationInterface
      */
-    public function bookPaginate(int $perPage, ?int $currentPage = 1): array {
+    public function bookPaginate(int $perPage, ?int $currentPage = 1): PaginationInterface {
         return $this
             ->getModel()
             ->select(['books.*', 'authors.name'])

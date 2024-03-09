@@ -38,5 +38,6 @@ class RouteBootstrapper implements BootstrapperInterface {
     private function setupRoutes(): void {
         // Подключение файла с маршрутами
         require __DIR__ . '/../../../routes/web.php';
+        require __DIR__ . '/../../../routes/api.php';
     }
 }
