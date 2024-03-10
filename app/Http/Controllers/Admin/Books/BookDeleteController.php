@@ -17,12 +17,12 @@ class BookDeleteController extends BaseController {
         BookRepositoryInterface $bookRepository,
         int $id
     ): void {
-        $author = $bookRepository->find($id);
+        $book = $bookRepository->find($id);
 
-        if (!$author) back('Книга не найден.');
+        if (!$book) back(['Книга не найден.'], 'errors');
 
-        $author->delete($id);
+        $book->delete($id);
 
-        back('Книга успешно удален.','success');
+        back('Книга успешно удален.');
     }
 }

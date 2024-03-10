@@ -19,10 +19,10 @@ class AuthorDeleteController extends BaseController {
     ): void {
         $author = $authorRepository->find($id);
 
-        if (!$author) back('Автор не найден.');
+        if (!$author) back(['Автор не найден.'], 'errors');
 
         $author->delete($id);
 
-        back('Автор успешно удален.','success');
+        back('Автор успешно удален.');
     }
 }

@@ -1,0 +1,387 @@
+{
+	"info": {
+		"_postman_id": "b80fe7e2-b824-4a82-9f44-dfd061b199ab",
+		"name": "BooksStore",
+		"description": "Добро пожаловать в документацию API книжного магазина BookStore. Наш API позволяет клиентам взаимодействовать с нашей базой данных книг и авторов, предоставляя функционал для создания, чтения, обновления и удаления информации о книгах",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7696642",
+		"_collection_link": "https://universal-shadow-129551.postman.co/workspace/My-Workspace~d38db024-8d0d-452e-847f-0c3eebf55ccc/collection/7696642-b80fe7e2-b824-4a82-9f44-dfd061b199ab?action=share&source=collection_link&creator=7696642"
+	},
+	"item": [
+		{
+			"name": "books",
+			"item": [
+				{
+					"name": "List",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/?page=1&limit=3",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "3"
+								}
+							]
+						},
+						"description": "StartFragment\n\n### GET /api/v1/books/list\n\n**Описание:** Получение списка всех книг с именем автора."
+					},
+					"response": [
+						{
+							"name": "List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://bookstore.loc/api/v1/books/?page=1&limit=3",
+									"protocol": "http",
+									"host": [
+										"bookstore",
+										"loc"
+									],
+									"path": [
+										"api",
+										"v1",
+										"books",
+										""
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "3"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sat, 09 Mar 2024 17:15:30 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "566"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=120"
+								},
+								{
+									"key": "Server",
+									"value": "Apache"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": [\n        {\n            \"id\": 1,\n            \"title\": \"Veniam aut delectusawd\",\n            \"description\": \"Consequatur numquam \",\n            \"publishedYear\": 2019,\n            \"created_at\": \"2024-03-09 16:15:01\",\n            \"updated_at\": \"4 часов назад\",\n            \"author_name\": \"Clementine Sellers\"\n        },\n        {\n            \"id\": 2,\n            \"title\": \"Aspernatur quidem qu\",\n            \"description\": \"Cupiditate voluptate\",\n            \"publishedYear\": 2010,\n            \"created_at\": \"2024-03-09 19:49:12\",\n            \"updated_at\": \"Не Обновлено\",\n            \"author_name\": \"Clementine Sellers\"\n        }\n    ],\n    \"current_page\": 1,\n    \"total_pages\": 1,\n    \"per_page\": 3,\n    \"total\": 2\n}"
+						}
+					]
+				},
+				{
+					"name": "Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"1"
+							]
+						},
+						"description": "Получает детальную информацию о конкретной книге по её ID"
+					},
+					"response": [
+						{
+							"name": "Details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://bookstore.loc/api/v1/books/1",
+									"protocol": "http",
+									"host": [
+										"bookstore",
+										"loc"
+									],
+									"path": [
+										"api",
+										"v1",
+										"books",
+										"1"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sat, 09 Mar 2024 17:14:45 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "294"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=120"
+								},
+								{
+									"key": "Server",
+									"value": "Apache"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"title\": \"Veniam aut delectusawd\",\n    \"description\": \"Consequatur numquam \",\n    \"publishedYear\": 2019,\n    \"created_at\": \"2024-03-09 16:15:01\",\n    \"updated_at\": \"3 часов назад\",\n    \"author\": {\n        \"id\": 1,\n        \"name\": \"Clementine Sellers\",\n        \"created_at\": \"2024-03-09 16:14:56\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Book Title",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum",
+									"type": "text"
+								},
+								{
+									"key": "author_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "published_year",
+									"value": "1989",
+									"type": "text"
+								},
+								{
+									"key": "_method",
+									"value": "PUT",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/books/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"1"
+							]
+						},
+						"description": "Обновляет информацию о книге. Требует передачи всех данных книги в теле запроса"
+					},
+					"response": [
+						{
+							"name": "Update",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "title",
+											"value": "Book Title",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum",
+											"type": "text"
+										},
+										{
+											"key": "author_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "published_year",
+											"value": "1989",
+											"type": "text"
+										},
+										{
+											"key": "_method",
+											"value": "PUT",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "http://bookstore.loc/api/v1/books/3",
+									"protocol": "http",
+									"host": [
+										"bookstore",
+										"loc"
+									],
+									"path": [
+										"api",
+										"v1",
+										"books",
+										"3"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 10 Mar 2024 06:05:37 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "917"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=120"
+								},
+								{
+									"key": "Server",
+									"value": "Apache"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Книга Book Title успешно обновлен.\",\n    \"book\": {\n        \"id\": 3,\n        \"title\": \"Book Title\",\n        \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum\",\n        \"publishedYear\": 1989,\n        \"created_at\": \"2024-03-09 20:17:35\",\n        \"updated_at\": \"только что\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Details",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"1"
+							]
+						},
+						"description": "Удаляет книгу из базы данных по её ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Получает страницу с перечнем всех книг с именами их авторов. Поддерживает пагинацию через параметры запроса"
+		}
+	]
+}

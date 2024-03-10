@@ -29,8 +29,10 @@ class BookUpdateController extends BaseController {
      * @throws \Exception
      */
     public function update(StoreRequest $request, $id): void {
-        $author = $this->repository->update($id, $request->validated());
+        $book = $this->repository->update($id, $request->validated());
 
-        back("Книга $author->title успешно обновлен.");
+        if (!$book) back(["Книга $book->title Не обновлен."], 'errors');
+
+        back("Книга $book->title успешно обновлен.");
     }
 }

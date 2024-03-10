@@ -8,6 +8,8 @@ use App\Core\Contracts\ModelInterface;
 use App\Core\Contracts\PaginationInterface;
 use App\Core\Contracts\RelationInterface;
 use App\Core\Pagination\Paginator;
+use DI\DependencyException;
+use DI\NotFoundException;
 use PDO;
 
 /**
@@ -51,6 +53,10 @@ class Model implements ModelInterface, RelationInterface {
      */
     protected array $whereConditions = [];
 
+    /**
+     * @throws DependencyException
+     * @throws NotFoundException
+     */
     public function __construct() {
         $this->connection = Application::getContainer()?->get(DatabaseInterface::class)?->connect();
     }
@@ -204,33 +210,49 @@ class Model implements ModelInterface, RelationInterface {
      * Находит запись по идентификатору.
      * @param $id
      * @return ?Model
+     * @throws \Exception
      */
     public function find($id): ?static {
-        $stmt = $this->executeQuery("SELECT * FROM ". self::getTable() ." WHERE id = :id", ['id' => $id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->executeQuery("SELECT * FROM ". self::getTable() ." WHERE id = :id", ['id' => $id]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!empty($this->relations) && !empty($result)) {
-            $result = $this->loadRelations([$result])[0];
+            if (!$result) return null;
+
+            $this->setAttributes($result);
+
+            if (!empty($this->relations)) {
+                $result = $this->loadRelations($result);
+
+                $this->setAttributes($result);
+            }
+
+            return $this;
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
         }
-
-        return $result ? $this->setAttributes($result) : null;
     }
 
     /**
      * Получает все записи из таблицы модели.
      *
      * @return array
+     * @throws \Exception
      */
     public function all(): array {
-        $table = self::getTable();
-        $stmt = $this->executeQuery("SELECT * FROM {$table}");
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $table = self::getTable();
+            $stmt = $this->executeQuery("SELECT * FROM {$table}");
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (!empty($this->relations) && !empty($results)) {
-            $results = $this->loadRelations($results);
+            if (!empty($this->relations) && !empty($results)) {
+                $results = $this->loadRelations($results);
+            }
+
+            return $results;
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
         }
-
-        return $results;
     }
 
     /**
@@ -238,17 +260,24 @@ class Model implements ModelInterface, RelationInterface {
      *
      * @param array $data
      * @return ?Model
+     * @throws \Exception
      */
     public function create(array $data): ?static
     {
-        $table = self::getTable();
-        $keys = array_keys($data);
-        $fields = implode(', ', $keys);
-        $placeholders = ':' . implode(', :', $keys);
+        try {
+            $table = self::getTable();
+            $keys = array_keys($data);
+            $fields = implode(', ', $keys);
+            $placeholders = ':' . implode(', :', $keys);
 
-        $this->executeQuery("INSERT INTO $table ($fields) VALUES ($placeholders)", $data);
+            $this->executeQuery("INSERT INTO $table ($fields) VALUES ($placeholders)", $data);
 
-        return $this->find($this->connection->lastInsertId());
+            $id = $this->connection->lastInsertId();
+
+            return $this->find($id);
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
+        }
     }
 
     /**
@@ -256,19 +285,27 @@ class Model implements ModelInterface, RelationInterface {
      *
      * @param mixed $id
      * @param array $data
-     * @return Model|null
+     * @return mixed
+     * @throws \Exception
      */
-    public function update($id, array $data): ?static {
-        $table = self::getTable();
-        $setPart = implode(', ', array_map(function ($field) {
-            return "$field = :$field";
-        }, array_keys($data)));
+    public function update(mixed $id, array $data): mixed {
+        try {
+            if (!$item = $this->find($id)) return false;
 
-        $data['id'] = $id;
+            $table = self::getTable();
+            $setPart = implode(', ', array_map(function ($field) {
+                return "$field = :$field";
+            }, array_keys($data)));
 
-        $this->executeQuery("UPDATE $table SET $setPart WHERE id = :id", $data);
+            $data['id'] = $id;
 
-        return $this->find($id);
+            $this->executeQuery("UPDATE $table SET $setPart WHERE id = :id", $data);
+
+            return $item;
+        } catch (\PDOException $e) {
+            // Логирование ошибки или выброс другого исключения с более понятным сообщением
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
+        }
     }
 
     /**
@@ -276,34 +313,49 @@ class Model implements ModelInterface, RelationInterface {
      *
      * @param mixed $id
      * @return bool
+     * @throws \Exception
      */
     public function delete($id): bool {
-        $table = self::getTable();
-        $stmt = $this->connection->prepare("DELETE FROM $table WHERE id = :id");
-        return $stmt->execute(['id' => $id]);
+        try {
+            $table = self::getTable();
+
+            if (!$this->find($id)) return false;
+
+            return $this->connection
+                ->prepare("DELETE FROM $table WHERE id = :id")
+                ->execute(['id' => $id]);
+        } catch (\PDOException $e) {
+            // Логирование ошибки или выброс другого исключения с более понятным сообщением
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
+        }
     }
 
     /**
      * Получает первую запись, соответствующую условиям выборки.
      *
      * @return ?Model
+     * @throws \Exception
      */
     public function first(): ?Model {
-        $stmt = $this->prepareSelectQuery("LIMIT 1");
-        $stmt->execute();
-        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->prepareSelectQuery("LIMIT 1");
+            $stmt->execute();
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$data) return null;
+            if (!$data) return null;
 
-        $this->setAttributes($data);
+            $this->setAttributes($data);
 
-        if (!empty($this->relations)) {
-            $this->loadRelations($this);
+            if (!empty($this->relations)) {
+                $this->loadRelations($this);
+            }
+
+            $this->resetConditions();
+
+            return $this;
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
         }
-
-        $this->resetConditions();
-
-        return $this;
     }
 
     /**
@@ -312,24 +364,29 @@ class Model implements ModelInterface, RelationInterface {
      * @param string $foreignKey
      * @param array $ids
      * @return array
+     * @throws \Exception
      */
     public function hasMany(string $relatedClass, string $foreignKey, array $ids): array {
-        // Подготовка списка плейсхолдеров для безопасного включения ID в запрос
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $this->executeQuery(
-            "SELECT * FROM " . $relatedClass::getTable() . " WHERE $foreignKey IN ($placeholders)",
-            $ids
-        );
+        try {
+            // Подготовка списка плейсхолдеров для безопасного включения ID в запрос
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $this->executeQuery(
+                "SELECT * FROM " . $relatedClass::getTable() . " WHERE $foreignKey IN ($placeholders)",
+                $ids
+            );
 
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Организация результатов по внешнему ключу
-        $groupedResults = [];
-        foreach ($results as $result) {
-            $groupedResults[$result[$foreignKey]][] = $result;
+            // Организация результатов по внешнему ключу
+            $groupedResults = [];
+            foreach ($results as $result) {
+                $groupedResults[$result[$foreignKey]][] = $result;
+            }
+
+            return $groupedResults;
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
         }
-
-        return $groupedResults;
     }
 
     /**
@@ -338,51 +395,60 @@ class Model implements ModelInterface, RelationInterface {
      * @param string $foreignKey
      * @param string $ownerKey
      * @return ?object
+     * @throws \Exception
      */
     public function belongsTo(string $relatedClass, string $foreignKey, string $ownerKey = 'id'): ?object {
-        $foreignKeyValue = $this->{$foreignKey};
+        try {
+            $foreignKeyValue = $this->{$foreignKey};
 
-        $stmt = $this->executeQuery(
-            "SELECT * FROM {$relatedClass::getTable()} WHERE $ownerKey = :ownerKey LIMIT 1",
-            ['ownerKey' => $foreignKeyValue]
-        );
+            $stmt = $this->executeQuery(
+                "SELECT * FROM {$relatedClass::getTable()} WHERE $ownerKey = :ownerKey LIMIT 1",
+                ['ownerKey' => $foreignKeyValue]
+            );
 
-        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$data) return null;
+            if (!$data) return null;
 
-        $relatedModel = new $relatedClass();
+            $relatedModel = new $relatedClass();
 
-        return $relatedModel->setAttributes($data);
+            return $relatedModel->setAttributes($data);
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
+        }
     }
 
     /**
      * @param string $sql
      * @param array $params
      * @return \PDOStatement|null
+     * @throws \Exception
      */
     protected function executeQuery(string $sql, array $params = []): ?\PDOStatement {
-        $stmt = $this->connection->prepare($sql);
+        try {
+            $stmt = $this->connection->prepare($sql);
+            $stmt->execute($params);
 
-        $stmt->execute($params);
-        return $stmt;
-    }
-
-    protected function buildSelectQuery(): string {
-        $table = self::getTable();
-        $conditions = join(' AND ', array_map(function ($cond) { return "{$cond['column']} {$cond['operator']} ?"; }, $this->whereConditions));
-        return sprintf("SELECT * FROM %s%s", $table, $conditions ? " WHERE $conditions" : '');
+            return $stmt;
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
+        }
     }
 
     /**
      * @param string $additionalConditions
      * @return \PDOStatement
+     * @throws \Exception
      */
     protected function prepareSelectQuery(string $additionalConditions = ""): \PDOStatement {
-        $table = self::getTable();
-        $conditions = implode(' AND ', array_map(fn($cond) => "{$cond['column']} {$cond['operator']} ?", $this->whereConditions));
-        $query = "SELECT * FROM ". $table . ($conditions ? " WHERE $conditions" : '') . " $additionalConditions";
-        return $this->executeQuery($query, $this->buildBindings());
+        try {
+            $table = self::getTable();
+            $conditions = implode(' AND ', array_map(fn($cond) => "{$cond['column']} {$cond['operator']} ?", $this->whereConditions));
+            $query = "SELECT * FROM ". $table . ($conditions ? " WHERE $conditions" : '') . " $additionalConditions";
+            return $this->executeQuery($query, $this->buildBindings());
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
+        }
     }
 
     protected function buildBindings(): array {
@@ -424,30 +490,45 @@ class Model implements ModelInterface, RelationInterface {
      *
      * @param array|object $results Результаты, для которых нужно загрузить связи
      * @return array|object Результаты с загруженными связями
+     * @throws \Exception
      */
     public function loadRelations(array|object $results): array|object {
-        if (is_object($results)) {
+        try {
+            if (is_object($results)) {
+                foreach ($this->relations as $relation) {
+                    if (method_exists($this, $relation)) {
+                        $results->{$relation} = $this->$relation();
+                    }
+                }
+
+                return $results;
+            }
+
+            $ids = isset($results['id']) ? [$results['id']] : array_column($results, 'id');
+
             foreach ($this->relations as $relation) {
                 if (method_exists($this, $relation)) {
-                    $results->{$relation} = $this->$relation();
+
+                    if (!str_ends_with($relation, 's')) {
+                        $results[$relation] = $this->$relation();
+                    } else {
+                        $relatedResults = $this->$relation($ids);
+
+                        if (!isset($results[0])) {
+                            $results[$relation] = $relatedResults[$results['id']] ?? [];
+                        } else {
+                            foreach ($results as &$result) {
+                                $result[$relation] = $relatedResults[$result['id']] ?? [];
+                            }
+                        }
+                    }
                 }
             }
 
             return $results;
+        } catch (\PDOException $e) {
+            throw new \Exception("Произошла ошибка при выполнении запроса: " . $e->getMessage());
         }
-
-        $ids = array_column($results, 'id');
-
-        foreach ($this->relations as $relation) {
-            if (method_exists($this, $relation)) {
-                $relatedResults = $this->$relation($ids);
-                foreach ($results as &$result) {
-                    $result[$relation] = $relatedResults[$result['id']] ?? [];
-                }
-            }
-        }
-
-        return $results;
     }
 
     public function resetConditions(): void {

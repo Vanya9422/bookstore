@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\books;
+namespace App\Http\Resources;
 
 use App\Core\Resources\JsonResource;
 
@@ -17,14 +17,23 @@ class BookResource extends JsonResource
             $updated = timeElapsedString($this->resource['updated_at']);
         }
 
-        return [
+        $data = [
             'id' => $this->resource['id'],
             'title' => $this->resource['title'],
             'description' => $this->resource['description'],
-            'author_name' => $this->resource['name'],
             'publishedYear' => $this->resource['published_year'] ?? 'Unknown Year',
             'created_at' => $this->resource['created_at'],
             'updated_at' => $updated
         ];
+
+        if (isset($this->resource['name'])) {
+            $data['author_name'] = $this->resource['name'];
+        }
+
+        if (isset($this->resource['author'])) {
+            $data['author'] = AuthorResource::make($this->resource['author']);
+        }
+
+        return $data;
     }
 }

@@ -24,9 +24,9 @@ interface RepositoryInterface
      *
      * @param int $id
      * @param array $attributes
-     * @return Model
+     * @return mixed
      */
-    public function update(int $id, array $attributes): Model;
+    public function update(int $id, array $attributes): mixed;
 
     /**
      * Удаляет запись из базы данных по идентификатору.

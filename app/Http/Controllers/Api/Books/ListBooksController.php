@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Books;
 
 use App\Http\Requests\api\BookListRequest;
-use App\Http\Resources\books\BookResource;
+use App\Http\Resources\BookResource;
 use App\Repository\Client\BookRepositoryInterface;
 
 class ListBooksController
@@ -13,23 +13,10 @@ class ListBooksController
         BookRepositoryInterface $bookRepository
     ) {
         $currentPage = $request->get('page', 1);
+        $limit = $request->get('limit', 20);
 
-        $perPage = 20;
+        $books = $bookRepository->bookPaginate($limit, $currentPage);
 
-        $books = $bookRepository->bookPaginate($perPage, $currentPage);
-
-//        $data = BookResource::make($books[0]);
-        $data = BookResource::collection($books);
-
-        echo '<pre>';
-        print_r($data);
-        echo '</pre>';
-        die;
-
-        $books = $bookRepository->bookPaginate($perPage, $currentPage);
-
-        print_r();
-
-        return response()->json($books);
+        return jsone()->response(BookResource::collection($books));
     }
 }

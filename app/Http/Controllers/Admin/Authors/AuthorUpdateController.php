@@ -29,6 +29,8 @@ class AuthorUpdateController extends BaseController {
     public function update(StoreRequest $request, $id): void {
         $author = $this->repository->update($id, $request->validated());
 
+        if (!$author) back(["Автор $author->name Не обновлен."], 'errors');
+
         back("Автор $author->name успешно обновлен.");
     }
 }

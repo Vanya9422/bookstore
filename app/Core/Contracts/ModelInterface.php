@@ -71,7 +71,7 @@ interface ModelInterface
      * @param array $data Ассоциативный массив данных для обновления записи.
      * @return mixed Обновленная запись.
      */
-    public function update($id, array $data);
+    public function update(mixed $id, array $data): mixed;
 
     /**
      * Удалить запись по идентификатору.

@@ -4,7 +4,6 @@ namespace App\Core\Resources;
 
 use App\Core\Contracts\JsonResourceInterface;
 use App\Core\Contracts\PaginationInterface;
-use App\Core\Pagination\Paginator;
 
 abstract class JsonResource implements JsonResourceInterface {
 
