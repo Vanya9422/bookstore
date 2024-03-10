@@ -49,5 +49,12 @@
 
   vendor/bin/phinx seed:run -s RoleSeeder && vendor/bin/phinx seed:run -s AdminAndUserSeeder
 ```
+## Для Авторизации 
+```
+Login - admin@example.com 
+Password - password
+```
+
+
 ## Контактная Информация
 Если у вас возникнут вопросы или понадобится помощь, обращайтесь к [Вани](https://t.me/grigoryan366).
